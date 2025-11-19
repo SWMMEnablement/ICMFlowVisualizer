@@ -58,7 +58,7 @@ export default function WorkflowVisualization() {
       const startNode = filteredNodes.find(node => node.id === 'start');
       setSelectedNode(startNode);
     }
-  }, [phaseFilter, selectedNode, visibleNodeIds, filteredNodes]);
+  }, [phaseFilter]);
 
   if (isLoading) {
     return (

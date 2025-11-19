@@ -115,7 +115,7 @@ export function WorkflowCanvas({ nodes, edges, onNodeSelect, selectedNodeId }: W
             style={{ width: '100%', height: '100%' }}
           >
             {edges.map(edge => {
-              const isHighlighted = selectedNodeId && (
+              const isHighlighted = Boolean(selectedNodeId) && (
                 edge.source === selectedNodeId || edge.target === selectedNodeId
               );
               return (

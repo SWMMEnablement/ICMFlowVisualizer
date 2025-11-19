@@ -6,6 +6,25 @@ This is an interactive visualization tool for the SWMM5 to ICM SWMM batch import
 
 The application serves as a documentation and monitoring tool, helping engineers understand the complex batch import process by visualizing the sequence of operations, decision points, file dependencies, and execution status of each workflow stage.
 
+## Recent Changes
+
+### November 19, 2025 - Exchange Script Node Enhancements
+- **Enhanced all 12 Exchange script workflow nodes** with detailed code annotations from source Ruby file
+- **Added helper function definitions** (log, is_label_list_empty?) to the retrieve_config node, making dependencies clear
+- **Added context comments** to each Exchange node documenting variables and functions in scope
+- **Verified API accuracy** for all ICM Ruby Exchange script methods:
+  - WSApplication.open for database connection (Exchange-specific)
+  - model_group.import_all_sw_model_objects with correct 4-parameter signature
+  - net.row_objects for object counting
+  - net.commit for saving changes
+- **Fixed node selection bug** where clicking nodes wouldn't update metadata panel after changing phase filters
+- **Fixed TypeScript error** in WorkflowCanvas edge highlighting logic
+
+### Previous Enhancements
+- Comprehensive UX improvements: onboarding dialog, auto-selected Start node, phase filters, numbered step list sidebar, hover tooltips
+- Enhanced all 24 UI script workflow nodes with detailed code annotations
+- Corrected ICM Ruby API syntax: WSApplication.message_box now uses correct 3-parameter signature throughout
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
