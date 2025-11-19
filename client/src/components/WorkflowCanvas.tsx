@@ -34,7 +34,7 @@ export function WorkflowCanvas({ nodes, edges, onNodeSelect, selectedNodeId }: W
   }, []);
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button === 0 && e.target === canvasRef.current) {
+    if (e.button === 0) {
       setIsPanning(true);
       setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
     }
@@ -114,13 +114,19 @@ export function WorkflowCanvas({ nodes, edges, onNodeSelect, selectedNodeId }: W
             className="absolute inset-0 pointer-events-none"
             style={{ width: '100%', height: '100%' }}
           >
-            {edges.map(edge => (
-              <WorkflowEdgeComponent
-                key={edge.id}
-                edge={edge}
-                nodes={nodes}
-              />
-            ))}
+            {edges.map(edge => {
+              const isHighlighted = selectedNodeId && (
+                edge.source === selectedNodeId || edge.target === selectedNodeId
+              );
+              return (
+                <WorkflowEdgeComponent
+                  key={edge.id}
+                  edge={edge}
+                  nodes={nodes}
+                  isHighlighted={isHighlighted}
+                />
+              );
+            })}
           </svg>
 
           {nodes.map(node => (
@@ -128,7 +134,10 @@ export function WorkflowCanvas({ nodes, edges, onNodeSelect, selectedNodeId }: W
               key={node.id}
               node={node}
               isSelected={node.id === selectedNodeId}
-              onClick={() => onNodeSelect?.(node)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onNodeSelect?.(node);
+              }}
             />
           ))}
         </div>

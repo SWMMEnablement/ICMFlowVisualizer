@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { type WorkflowNode, type WorkflowDefinition } from "@shared/schema";
+import { type WorkflowNode, type WorkflowDefinition, type LogEntry } from "@shared/schema";
 import { WorkflowCanvas } from "@/components/WorkflowCanvas";
 import { MetadataPanel } from "@/components/MetadataPanel";
 import { LegendPanel } from "@/components/LegendPanel";
@@ -13,8 +13,12 @@ export default function WorkflowVisualization() {
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [isLegendOpen, setIsLegendOpen] = useState(false);
 
-  const { data: workflowData, isLoading } = useQuery<WorkflowDefinition>({
+  const { data: workflowData, isLoading, error } = useQuery<WorkflowDefinition>({
     queryKey: ['/api/workflow'],
+  });
+
+  const { data: logs = [], isLoading: logsLoading, error: logsError } = useQuery<LogEntry[]>({
+    queryKey: ['/api/logs'],
   });
 
   if (isLoading) {
@@ -23,6 +27,17 @@ export default function WorkflowVisualization() {
         <div className="text-center space-y-3">
           <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-muted-foreground">Loading workflow visualization...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <div className="text-center space-y-3">
+          <p className="text-destructive">Error loading workflow data</p>
+          <p className="text-sm text-muted-foreground">{error instanceof Error ? error.message : 'Unknown error'}</p>
         </div>
       </div>
     );
@@ -100,6 +115,9 @@ export default function WorkflowVisualization() {
               selectedNode={selectedNode}
               fileConfigs={workflowData.fileConfigs}
               statistics={workflowData.statistics}
+              logs={logs}
+              logsLoading={logsLoading}
+              logsError={logsError}
             />
           </div>
         )}

@@ -11,9 +11,11 @@ interface MetadataPanelProps {
   fileConfigs?: FileConfig[];
   statistics?: ImportStatistics;
   logs?: LogEntry[];
+  logsLoading?: boolean;
+  logsError?: Error | null;
 }
 
-export function MetadataPanel({ selectedNode, fileConfigs = [], statistics, logs = [] }: MetadataPanelProps) {
+export function MetadataPanel({ selectedNode, fileConfigs = [], statistics, logs = [], logsLoading, logsError }: MetadataPanelProps) {
   const getStatusBadge = (status?: string) => {
     switch (status) {
       case 'success':
@@ -231,32 +233,48 @@ export function MetadataPanel({ selectedNode, fileConfigs = [], statistics, logs
 
           <TabsContent value="logs" className="h-full m-0 p-0" data-testid="panel-logs">
             <ScrollArea className="h-full">
-              <div className="p-4 space-y-1 font-mono text-xs">
-                {logs.length > 0 ? (
-                  logs.map((log, idx) => (
-                    <div
-                      key={idx}
-                      className={cn(
-                        "py-1.5 px-2 rounded",
-                        log.level === 'ERROR' && "bg-destructive/10 text-destructive",
-                        log.level === 'WARNING' && "bg-warning/10 text-warning-foreground",
-                        log.level === 'SUCCESS' && "bg-secondary/10 text-secondary",
-                        log.level === 'INFO' && "text-muted-foreground"
-                      )}
-                      data-testid={`log-entry-${idx}`}
-                    >
-                      <span className="opacity-60">[{log.timestamp}]</span>{' '}
-                      <span className="font-semibold">{log.level}</span>:{' '}
-                      {log.message}
-                      {log.file && <span className="opacity-60"> ({log.file})</span>}
-                    </div>
-                  ))
-                ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground text-sm font-sans">
-                    No logs available
+              {logsLoading ? (
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm font-sans">
+                  <div className="text-center space-y-2">
+                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                    <p>Loading logs...</p>
                   </div>
-                )}
-              </div>
+                </div>
+              ) : logsError ? (
+                <div className="flex items-center justify-center h-full p-4">
+                  <div className="text-center space-y-2">
+                    <p className="text-destructive text-sm font-sans">Error loading logs</p>
+                    <p className="text-xs text-muted-foreground">{logsError.message}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 space-y-1 font-mono text-xs">
+                  {logs.length > 0 ? (
+                    logs.map((log, idx) => (
+                      <div
+                        key={idx}
+                        className={cn(
+                          "py-1.5 px-2 rounded",
+                          log.level === 'ERROR' && "bg-destructive/10 text-destructive",
+                          log.level === 'WARNING' && "bg-warning/10 text-warning-foreground",
+                          log.level === 'SUCCESS' && "bg-secondary/10 text-secondary",
+                          log.level === 'INFO' && "text-muted-foreground"
+                        )}
+                        data-testid={`log-entry-${idx}`}
+                      >
+                        <span className="opacity-60">[{log.timestamp}]</span>{' '}
+                        <span className="font-semibold">{log.level}</span>:{' '}
+                        {log.message}
+                        {log.file && <span className="opacity-60"> ({log.file})</span>}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground text-sm font-sans">
+                      No logs available
+                    </div>
+                  )}
+                </div>
+              )}
             </ScrollArea>
           </TabsContent>
         </div>

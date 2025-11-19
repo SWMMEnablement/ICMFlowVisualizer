@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 interface WorkflowNodeProps {
   node: WorkflowNode;
   isSelected?: boolean;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 export function WorkflowNodeComponent({ node, isSelected, onClick }: WorkflowNodeProps) {

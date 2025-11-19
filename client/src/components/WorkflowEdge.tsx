@@ -3,9 +3,10 @@ import { type WorkflowEdge, type WorkflowNode } from "@shared/schema";
 interface WorkflowEdgeProps {
   edge: WorkflowEdge;
   nodes: WorkflowNode[];
+  isHighlighted?: boolean;
 }
 
-export function WorkflowEdgeComponent({ edge, nodes }: WorkflowEdgeProps) {
+export function WorkflowEdgeComponent({ edge, nodes, isHighlighted }: WorkflowEdgeProps) {
   const sourceNode = nodes.find(n => n.id === edge.source);
   const targetNode = nodes.find(n => n.id === edge.target);
 
@@ -18,13 +19,16 @@ export function WorkflowEdgeComponent({ edge, nodes }: WorkflowEdgeProps) {
 
   const midY = (startY + endY) / 2;
 
-  const strokeWidth = edge.type === 'primary' ? 2 : 1;
+  const strokeWidth = isHighlighted ? 3 : (edge.type === 'primary' ? 2 : 1);
   const strokeDasharray = edge.type === 'conditional' ? "4,4" : "0";
-  const stroke = edge.type === 'primary' 
+  const stroke = isHighlighted
+    ? "hsl(var(--ring))"
+    : edge.type === 'primary' 
     ? "hsl(var(--primary))" 
     : edge.type === 'conditional'
     ? "hsl(var(--warning))"
     : "hsl(var(--muted-foreground))";
+  const opacity = isHighlighted ? 1 : 0.7;
 
   const path = `M ${startX} ${startY} L ${startX} ${midY} L ${endX} ${midY} L ${endX} ${endY}`;
 
@@ -36,7 +40,9 @@ export function WorkflowEdgeComponent({ edge, nodes }: WorkflowEdgeProps) {
         stroke={stroke}
         strokeWidth={strokeWidth}
         strokeDasharray={strokeDasharray}
-        markerEnd="url(#arrowhead)"
+        opacity={opacity}
+        markerEnd={isHighlighted ? "url(#arrowhead-highlighted)" : "url(#arrowhead)"}
+        className="transition-all duration-200"
       />
       {edge.label && (
         <text
@@ -61,7 +67,21 @@ export function WorkflowEdgeComponent({ edge, nodes }: WorkflowEdgeProps) {
         >
           <polygon
             points="0 0, 8 4, 0 8"
-            fill={stroke}
+            fill="hsl(var(--primary))"
+            opacity="0.7"
+          />
+        </marker>
+        <marker
+          id="arrowhead-highlighted"
+          markerWidth="8"
+          markerHeight="8"
+          refX="8"
+          refY="4"
+          orient="auto"
+        >
+          <polygon
+            points="0 0, 8 4, 0 8"
+            fill="hsl(var(--ring))"
           />
         </marker>
       </defs>
