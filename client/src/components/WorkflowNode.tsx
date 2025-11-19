@@ -1,6 +1,11 @@
 import { type WorkflowNode } from "@shared/schema";
 import { CheckCircle2, XCircle, AlertTriangle, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface WorkflowNodeProps {
   node: WorkflowNode;
@@ -63,7 +68,7 @@ export function WorkflowNodeComponent({ node, isSelected, onClick }: WorkflowNod
     }
   };
 
-  return (
+  const nodeContent = (
     <div
       className={getNodeStyle()}
       style={{
@@ -99,4 +104,24 @@ export function WorkflowNodeComponent({ node, isSelected, onClick }: WorkflowNod
       )}
     </div>
   );
+
+  if (node.description) {
+    return (
+      <Tooltip delayDuration={200}>
+        <TooltipTrigger asChild>
+          {nodeContent}
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-xs" data-testid={`tooltip-${node.id}`}>
+          <p className="text-sm">{node.description}</p>
+          {node.metadata?.methodName && (
+            <p className="text-xs text-muted-foreground mt-1 font-mono">
+              {node.metadata.methodName}()
+            </p>
+          )}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return nodeContent;
 }
