@@ -59,7 +59,7 @@ export default function WorkflowVisualization() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-serif font-bold text-foreground">
-              SWMM5 Workflow Visualizer
+              SWMM5 to ICM SWMM Workflow Visualizer
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               ICM InfoWorks Batch Import Process
