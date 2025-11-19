@@ -1,0 +1,266 @@
+import { type WorkflowNode, type FileConfig, type ImportStatistics, type LogEntry } from "@shared/schema";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { FileText, Activity, BarChart3, Terminal, CheckCircle2, XCircle, AlertTriangle, Clock } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface MetadataPanelProps {
+  selectedNode?: WorkflowNode;
+  fileConfigs?: FileConfig[];
+  statistics?: ImportStatistics;
+  logs?: LogEntry[];
+}
+
+export function MetadataPanel({ selectedNode, fileConfigs = [], statistics, logs = [] }: MetadataPanelProps) {
+  const getStatusBadge = (status?: string) => {
+    switch (status) {
+      case 'success':
+        return <Badge className="bg-secondary text-secondary-foreground"><CheckCircle2 className="w-3 h-3 mr-1" />Success</Badge>;
+      case 'error':
+        return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Error</Badge>;
+      case 'warning':
+        return <Badge className="bg-warning text-warning-foreground"><AlertTriangle className="w-3 h-3 mr-1" />Warning</Badge>;
+      case 'processing':
+        return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1 animate-pulse" />Processing</Badge>;
+      default:
+        return <Badge variant="outline">Pending</Badge>;
+    }
+  };
+
+  return (
+    <div className="h-full bg-card border-l border-border">
+      <Tabs defaultValue="overview" className="h-full flex flex-col">
+        <div className="border-b border-border px-4 py-3">
+          <TabsList className="grid w-full grid-cols-4 gap-1">
+            <TabsTrigger value="overview" className="text-xs" data-testid="tab-overview">
+              <Activity className="w-3 h-3 mr-1" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="files" className="text-xs" data-testid="tab-files">
+              <FileText className="w-3 h-3 mr-1" />
+              Files
+            </TabsTrigger>
+            <TabsTrigger value="statistics" className="text-xs" data-testid="tab-statistics">
+              <BarChart3 className="w-3 h-3 mr-1" />
+              Stats
+            </TabsTrigger>
+            <TabsTrigger value="logs" className="text-xs" data-testid="tab-logs">
+              <Terminal className="w-3 h-3 mr-1" />
+              Logs
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <div className="flex-1 overflow-hidden">
+          <TabsContent value="overview" className="h-full m-0 p-4" data-testid="panel-overview">
+            <ScrollArea className="h-full">
+              {selectedNode ? (
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-serif font-semibold text-lg mb-2">{selectedNode.label}</h3>
+                    {selectedNode.status && (
+                      <div className="mb-3">{getStatusBadge(selectedNode.status)}</div>
+                    )}
+                    {selectedNode.description && (
+                      <p className="text-sm text-muted-foreground leading-relaxed">{selectedNode.description}</p>
+                    )}
+                  </div>
+
+                  {selectedNode.metadata && Object.keys(selectedNode.metadata).length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm">Metadata</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <dl className="space-y-2 text-xs">
+                          {Object.entries(selectedNode.metadata).map(([key, value]) => (
+                            <div key={key} className="flex justify-between">
+                              <dt className="font-medium text-muted-foreground">{key}:</dt>
+                              <dd className="font-mono">{String(value)}</dd>
+                            </div>
+                          ))}
+                        </dl>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {selectedNode.script && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm">Script Context</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-xs text-muted-foreground">
+                          This step runs in the <span className="font-mono font-semibold text-foreground">{selectedNode.script === 'ui' ? 'SWMM5_Import_UI_Annotated.rb' : 'SWMM5_Import_Exchange_Annotated.rb'}</span> script.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                  Select a workflow node to view details
+                </div>
+              )}
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="files" className="h-full m-0 p-4" data-testid="panel-files">
+            <ScrollArea className="h-full">
+              {fileConfigs.length > 0 ? (
+                <div className="space-y-3">
+                  {fileConfigs.map((file) => (
+                    <Card key={file.id} data-testid={`file-card-${file.id}`}>
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <CardTitle className="text-sm font-mono truncate">{file.fileName}</CardTitle>
+                          {file.status && getStatusBadge(file.status)}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="text-xs space-y-2">
+                        <div>
+                          <span className="text-muted-foreground">Model Group:</span>
+                          <p className="font-medium mt-1">{file.modelGroupName}</p>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Path:</span>
+                          <p className="font-mono text-xs mt-1 break-all">{file.filePath}</p>
+                        </div>
+                        {file.fileSize && (
+                          <div>
+                            <span className="text-muted-foreground">Size:</span>
+                            <p className="font-mono mt-1">{(file.fileSize / 1024).toFixed(2)} KB</p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                  No files configured
+                </div>
+              )}
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="statistics" className="h-full m-0 p-4" data-testid="panel-statistics">
+            <ScrollArea className="h-full">
+              {statistics ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="text-center">
+                          <div className="text-3xl font-bold text-primary">{statistics.filesProcessed}</div>
+                          <div className="text-xs text-muted-foreground mt-1">Files Processed</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="text-center">
+                          <div className="text-3xl font-bold text-secondary">{statistics.filesSuccessful}</div>
+                          <div className="text-xs text-muted-foreground mt-1">Successful</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="text-center">
+                          <div className="text-3xl font-bold text-destructive">{statistics.filesFailed}</div>
+                          <div className="text-xs text-muted-foreground mt-1">Failed</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="text-center">
+                          <div className="text-3xl font-bold">{statistics.totalNodes}</div>
+                          <div className="text-xs text-muted-foreground mt-1">Total Nodes</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm">Network Elements</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Links:</span>
+                        <span className="font-mono font-semibold">{statistics.totalLinks}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Subcatchments:</span>
+                        <span className="font-mono font-semibold">{statistics.totalSubcatchments}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Label Lists Deleted:</span>
+                        <span className="font-mono font-semibold">{statistics.totalLabelListsDeleted}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {statistics.failedFiles.length > 0 && (
+                    <Card className="border-destructive/50">
+                      <CardHeader>
+                        <CardTitle className="text-sm text-destructive">Failed Files</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2">
+                        {statistics.failedFiles.map((failed, idx) => (
+                          <div key={idx} className="text-xs space-y-1">
+                            <div className="font-mono font-semibold">{failed.file}</div>
+                            <div className="text-muted-foreground">{failed.reason}</div>
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                  No statistics available
+                </div>
+              )}
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="logs" className="h-full m-0 p-0" data-testid="panel-logs">
+            <ScrollArea className="h-full">
+              <div className="p-4 space-y-1 font-mono text-xs">
+                {logs.length > 0 ? (
+                  logs.map((log, idx) => (
+                    <div
+                      key={idx}
+                      className={cn(
+                        "py-1.5 px-2 rounded",
+                        log.level === 'ERROR' && "bg-destructive/10 text-destructive",
+                        log.level === 'WARNING' && "bg-warning/10 text-warning-foreground",
+                        log.level === 'SUCCESS' && "bg-secondary/10 text-secondary",
+                        log.level === 'INFO' && "text-muted-foreground"
+                      )}
+                      data-testid={`log-entry-${idx}`}
+                    >
+                      <span className="opacity-60">[{log.timestamp}]</span>{' '}
+                      <span className="font-semibold">{log.level}</span>:{' '}
+                      {log.message}
+                      {log.file && <span className="opacity-60"> ({log.file})</span>}
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex items-center justify-center h-full text-muted-foreground text-sm font-sans">
+                    No logs available
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          </TabsContent>
+        </div>
+      </Tabs>
+    </div>
+  );
+}
