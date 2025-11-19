@@ -1,0 +1,300 @@
+# ==============================================================================
+# FILE: SWMM5_Import_Exchange_Annotated.rb
+# AUTHOR: [Your Name/Organization]
+# TARGET APPLICATION: InfoWorks ICM (Runs via ICMExchange.exe)
+#
+# DESCRIPTION:
+# This is the "Worker" script. It is designed to run without a User Interface.
+# It reads instructions from a configuration file, connects to the database,
+# and performs the actual .inp import operations.
+#
+# CRITICAL CONCEPTS:
+# 1. Headless Operation: Do NOT use WSApplication.message_box or .prompt here.
+#    Any UI call will cause the script to hang or crash.
+# 2. Environment Variables: Used to receive the config file path from the UI script.
+# 3. Error Containment: Uses Begin/Rescue blocks inside loops so that one bad
+#    file does not stop the entire batch.
+# ==============================================================================
+
+require 'yaml' 
+
+# ==============================================================================
+# LOGGING HELPER
+# ==============================================================================
+# Since we have no GUI, the Log File is our only way to know what happened.
+# This method prints to the Console (invisible mostly) and the File (saved).
+def log(message, log_file = nil)
+  puts message
+  log_file.puts message if log_file
+end
+
+# Helper to identify empty Label Lists (often created by SWMM5 imports)
+# We delete these to keep the database clean.
+def is_label_list_empty?(label_list, log_file = nil)
+  begin
+    # Access the raw 'labels' array inside the ICM object
+    labels_blob = label_list['labels']
+    return labels_blob.nil? || labels_blob.empty?
+  rescue => e
+    log "  WARNING: Error inspecting label list: #{e.message}", log_file
+    false
+  end
+end
+
+# ==============================================================================
+# STEP 1: BOOTSTRAP AND CONFIG LOADING
+# ==============================================================================
+
+# Retrieve the config path from the Environment Variable set by the UI script
+config_file = ENV['ICM_IMPORT_CONFIG']
+
+# FAILSAFE: If ENV is missing (e.g., debugging manually), try to find the file
+# by looking in adjacent folders relative to this script.
+unless config_file && File.exist?(config_file)
+  script_dir = File.dirname(__FILE__)
+  # Look up to 2 levels up for the Log Files folder
+  [script_dir, File.dirname(script_dir), File.dirname(File.dirname(script_dir))].each do |dir|
+    Dir.glob(File.join(dir, "**", "ICM Import Log Files", "import_config.yaml")).each do |path|
+      # If found, check modification time to get the newest one
+      config_file = path if config_file.nil? || File.mtime(path) > File.mtime(config_file)
+    end
+  end
+end
+
+# If we still have no config, we must abort.
+unless config_file && File.exist?(config_file)
+  puts "FATAL ERROR: Configuration file not found. Please run the UI script first."
+  exit 1
+end
+
+# Load the configuration data
+config = YAML.load_file(config_file)
+
+# Validate essential keys
+required_keys = ['import_mode', 'file_configs', 'cleanup_empty_label_lists']
+missing = required_keys - config.keys
+if missing.any?
+  puts "FATAL ERROR: Config file corrupted. Missing keys: #{missing.join(', ')}"
+  exit 1
+end
+
+# Localize variables for easier access
+file_configs = config['file_configs'] 
+cleanup_empty_label_lists = config['cleanup_empty_label_lists']
+validate_after_import = config.fetch('validate_after_import', false)
+
+# ==============================================================================
+# STEP 2: DATABASE CONNECTION
+# ==============================================================================
+
+begin
+  # API NOTE: WSApplication.open connects to the last used database or the one
+  # specified in the Exchange command line (though we rely on defaults here).
+  db = WSApplication.open
+rescue => e
+  puts "FATAL ERROR: Could not connect to ICM Database: #{e.message}"
+  exit 1
+end
+
+if db.nil?
+  puts "FATAL ERROR: Database connection object is nil."
+  exit 1
+end
+
+# ==============================================================================
+# STEP 3: LOG INITIALIZATION
+# ==============================================================================
+
+# Determine where the config file lives, and save logs there too
+log_dir = File.dirname(config_file)
+log_filename = File.join(log_dir, "SWMM5_Batch_Import_#{Time.now.strftime('%Y%m%d_%H%M%S')}.log")
+log_file = File.open(log_filename, 'w') 
+
+log "="*70, log_file
+log "SWMM5 EXCHANGE IMPORT LOG", log_file
+log "Timestamp: #{Time.now}", log_file
+log "Database GUID: #{db.guid}", log_file
+log "Total Files: #{file_configs.length}", log_file
+log "="*70 + "\n", log_file
+
+# Initialize the Scorecard
+aggregate_stats = {
+  files_processed: 0,
+  files_successful: 0,
+  files_failed: 0,
+  total_nodes: 0,
+  total_links: 0,
+  total_subcatchments: 0,
+  total_label_lists_deleted: 0,
+  failed_files: []
+}
+
+# ==============================================================================
+# STEP 4: BATCH PROCESSING LOOP
+# ==============================================================================
+
+puts "STARTING BATCH PROCESSING..."
+
+file_configs.each_with_index do |file_config, file_index|
+  
+  # Extract details for this specific file
+  file_path = file_config['file_path']
+  model_group_name = file_config['model_group_name']
+  file_basename = file_config['file_basename']
+  
+  log "\n" + "="*70, log_file
+  log "PROCESSING [#{file_index + 1}/#{file_configs.length}]: #{file_basename}", log_file
+  log "="*70, log_file
+  
+  aggregate_stats[:files_processed] += 1
+
+  # Sanity check: Does file exist?
+  if !File.exist?(file_path)
+    log "ERROR: Source file not found at path: #{file_path}", log_file
+    aggregate_stats[:files_failed] += 1
+    next 
+  end
+
+  # ----------------------------------------------------------------------------
+  # ERROR BOUNDARY: We wrap the import of THIS specific file in a Begin/Rescue
+  # so that if it crashes (e.g., corrupt file), the loop continues to the next.
+  # ----------------------------------------------------------------------------
+  begin
+    # Stats for this specific file
+    import_stats = { nodes: 0, links: 0, subcatchments: 0 }
+    
+    # --- A. Create Container ---
+    log "  Phase 1: Creating Model Group '#{model_group_name}'", log_file
+    # API NOTE: new_model_object(Type, Name) creates the item in the DB tree.
+    model_group = db.new_model_object('Model Group', model_group_name)
+    
+    # --- B. Import Data ---
+    log "  Phase 2: Importing .inp content", log_file
+    
+    # Define a path for the internal engine to write its specific warnings
+    import_log_path = File.join(log_dir, "#{File.basename(file_path, '.inp')}_engine_log.txt")
+    
+    # API NOTE: import_all_sw_model_objects is the primary import method.
+    # Args: (SourceFile, FormatType, OptionsHash, LogFilePath)
+    imported_objects = model_group.import_all_sw_model_objects(
+      file_path,       
+      "inp",           
+      nil,             
+      import_log_path  
+    )
+    
+    if imported_objects.nil? || imported_objects.empty?
+      raise "Import returned zero objects. File may be empty or invalid format."
+    end
+    
+    log "  Success: #{imported_objects.length} objects created.", log_file
+
+    # --- C. Verify & Count ---
+    
+    # Locate the 'SWMM Network' object within the imported items
+    imported_network = imported_objects.find { |obj| obj.type == 'SWMM network' }
+    
+    if imported_network
+      # API NOTE: We must .open the network to read its internal tables
+      net = imported_network.open
+      
+      # API NOTE: row_objects('table_name') returns an array of all rows in that table
+      import_stats[:nodes] = net.row_objects('_nodes').length
+      import_stats[:links] = net.row_objects('_links').length
+      import_stats[:subcatchments] = net.row_objects('_subcatchments').length
+      
+      log "  Stats: #{import_stats[:nodes]} Nodes, #{import_stats[:links]} Links", log_file
+      
+      # Update global stats
+      aggregate_stats[:total_nodes] += import_stats[:nodes]
+      aggregate_stats[:total_links] += import_stats[:links]
+      aggregate_stats[:total_subcatchments] += import_stats[:subcatchments]
+      
+      # API NOTE: commit saves the state. Optional string is the commit message history.
+      net.commit("Imported via Automation Script")
+    else
+      log "  WARNING: No SWMM Network object found in import payload.", log_file
+    end
+
+    # --- D. Cleanup ---
+    
+    if cleanup_empty_label_lists
+      log "  Phase 3: Cleaning empty Label Lists", log_file
+      deleted_count = 0
+      
+      imported_objects.each do |obj|
+        if obj.type == 'Label List'
+          if is_label_list_empty?(obj, log_file)
+             obj.delete # Remove from database
+             deleted_count += 1
+          end
+        end
+      end
+      
+      if deleted_count > 0
+        log "  Cleanup: Deleted #{deleted_count} empty label lists.", log_file
+        aggregate_stats[:total_label_lists_deleted] += deleted_count
+      end
+    end
+    
+    # --- E. Validation ---
+    if import_stats[:nodes] == 0 && import_stats[:links] == 0
+       log "  WARNING: Imported network appears to be empty (0 nodes/links).", log_file
+    end
+
+    # Mark success
+    aggregate_stats[:files_successful] += 1
+    log "  RESULT: SUCCESS", log_file
+
+  rescue => e
+    # --------------------------------------------------------------------------
+    # EXCEPTION HANDLER for individual file failures
+    # --------------------------------------------------------------------------
+    log "  CRITICAL FAILURE: #{e.message}", log_file
+    log "  Trace: #{e.backtrace.first}", log_file
+    
+    # Clean up the mess: Delete the half-baked Model Group
+    if defined?(model_group) && model_group
+      begin
+        model_group.delete
+        log "  Cleanup: Deleted failed Model Group to maintain DB hygiene.", log_file
+      rescue
+        log "  Cleanup Failed: Could not delete model group.", log_file
+      end
+    end
+    
+    aggregate_stats[:files_failed] += 1
+    aggregate_stats[:failed_files] << { file: file_basename, reason: e.message }
+  end
+end
+
+# ==============================================================================
+# STEP 5: SUMMARY REPORT GENERATION
+# ==============================================================================
+
+log "\n" + "="*70, log_file
+log "BATCH PROCESS COMPLETE", log_file
+log "Processed: #{aggregate_stats[:files_processed]}", log_file
+log "Success:   #{aggregate_stats[:files_successful]}", log_file
+log "Failed:    #{aggregate_stats[:files_failed]}", log_file
+log "="*70, log_file
+
+log_file.close
+
+# Write a key-value text file that the UI script can parse easily
+summary_file_path = File.join(log_dir, "batch_summary.txt")
+
+File.open(summary_file_path, 'w') do |f|
+  f.puts "files_processed=#{aggregate_stats[:files_processed]}"
+  f.puts "files_successful=#{aggregate_stats[:files_successful]}"
+  f.puts "files_failed=#{aggregate_stats[:files_failed]}"
+  f.puts "total_nodes=#{aggregate_stats[:total_nodes]}"
+  f.puts "total_links=#{aggregate_stats[:total_links]}"
+  f.puts "total_subcatchments=#{aggregate_stats[:total_subcatchments]}"
+  f.puts "total_label_lists_deleted=#{aggregate_stats[:total_label_lists_deleted]}"
+end
+
+puts "Summary written to: #{summary_file_path}"
+
+# Return an exit code to the OS (0 = Good, 1 = Problems)
+exit(aggregate_stats[:files_failed] > 0 ? 1 : 0)
