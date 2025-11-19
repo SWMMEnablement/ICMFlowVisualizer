@@ -197,7 +197,7 @@ export default function WorkflowVisualization() {
         </div>
 
         {isPanelOpen && (
-          <div className="w-[550px] flex-shrink-0">
+          <div className="w-[605px] flex-shrink-0">
             <MetadataPanel
               selectedNode={selectedNode}
               fileConfigs={workflowData.fileConfigs}
