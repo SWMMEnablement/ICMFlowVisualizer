@@ -4,10 +4,11 @@ import { WorkflowCanvas } from "@/components/WorkflowCanvas";
 import { MetadataPanel } from "@/components/MetadataPanel";
 import { LegendPanel } from "@/components/LegendPanel";
 import { OnboardingDialog } from "@/components/OnboardingDialog";
+import { WorkflowStepList } from "@/components/WorkflowStepList";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Info, PanelRightClose, PanelRightOpen, Filter } from "lucide-react";
+import { Info, PanelRightClose, PanelRightOpen, Filter, List, ListCollapse } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 type PhaseFilter = 'all' | 'ui' | 'exchange';
@@ -16,6 +17,7 @@ export default function WorkflowVisualization() {
   const [selectedNode, setSelectedNode] = useState<WorkflowNode | undefined>();
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [isLegendOpen, setIsLegendOpen] = useState(false);
+  const [isStepListOpen, setIsStepListOpen] = useState(true);
   const [phaseFilter, setPhaseFilter] = useState<PhaseFilter>('all');
 
   const { data: workflowData, isLoading, error } = useQuery<WorkflowDefinition>({
@@ -123,6 +125,24 @@ export default function WorkflowVisualization() {
           </div>
 
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsStepListOpen(!isStepListOpen)}
+              data-testid="button-toggle-steps"
+            >
+              {isStepListOpen ? (
+                <>
+                  <ListCollapse className="w-4 h-4 mr-2" />
+                  Hide Steps
+                </>
+              ) : (
+                <>
+                  <List className="w-4 h-4 mr-2" />
+                  Show Steps
+                </>
+              )}
+            </Button>
             <Sheet open={isLegendOpen} onOpenChange={setIsLegendOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" size="sm" data-testid="button-legend">
@@ -157,7 +177,17 @@ export default function WorkflowVisualization() {
       </header>
 
       <div className="flex-1 flex overflow-hidden">
-        <div className={isPanelOpen ? "flex-1" : "w-full"}>
+        {isStepListOpen && (
+          <div className="w-[320px] flex-shrink-0">
+            <WorkflowStepList
+              nodes={filteredNodes}
+              selectedNodeId={selectedNode?.id}
+              onNodeSelect={setSelectedNode}
+            />
+          </div>
+        )}
+
+        <div className="flex-1 min-w-0">
           <WorkflowCanvas
             nodes={filteredNodes}
             edges={filteredEdges}
