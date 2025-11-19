@@ -1,0 +1,397 @@
+# ==============================================================================
+# FILE: SWMM5_Import_UI_Annotated.rb
+# AUTHOR: [Your Name/Organization]
+# TARGET APPLICATION: InfoWorks ICM (Runs in the UI)
+#
+# DESCRIPTION:
+# This is the "Frontend" script. It interacts with the user to determine
+# import parameters. It does not perform the heavy lifting itself; instead,
+# it delegates the actual import process to a secondary "Exchange" script.
+#
+# WORKFLOW:
+# 1. User Prompt: Ask for Single File vs Batch Mode.
+# 2. File Discovery: recursively scan folders if requested.
+# 3. Configuration: Write user settings to a temporary YAML file.
+# 4. Execution: Launch 'ICMExchange.exe' via command line to run the worker script.
+# 5. Reporting: Read the summary log created by the worker and alert the user.
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# MODULE IMPORTS
+# ------------------------------------------------------------------------------
+require 'yaml'  # Used to serialize the settings hash into a readable text file.
+require 'open3' # Standard Ruby library for running system commands (CMD) and capturing output.
+
+# Identify where this script is currently saved. We need this path to locate 
+# the companion "Exchange" script, which should be in the same folder.
+script_dir = File.dirname(WSApplication.script_file)
+
+# ==============================================================================
+# METHOD: find_inp_files
+# ------------------------------------------------------------------------------
+# A recursive function to crawl through directory trees.
+#
+# Args:
+#   directory (String): The root path to start searching.
+#   recursive (Boolean): If true, the function calls itself for every subfolder.
+#
+# Returns:
+#   Array: A list of full file paths ending in .inp
+# ==============================================================================
+def find_inp_files(directory, recursive = true)
+  files = [] 
+  
+  begin
+    # Iterate over every entry (file or folder) in the directory
+    Dir.entries(directory).each do |entry|
+      # Skip the system navigation dots (current folder '.' and parent '..')
+      next if entry == '.' || entry == '..'
+      
+      # Construct the absolute path
+      full_path = File.join(directory, entry)
+      
+      # LOGIC: Branch based on whether the entry is a Directory or a File
+      if File.directory?(full_path) && recursive
+        # RECURSION: If it's a folder, dive in by calling this method again.
+        # .concat merges the results from the subfolder into our main list.
+        files.concat(find_inp_files(full_path, recursive))
+        
+      elsif File.file?(full_path) && entry.downcase.end_with?('.inp')
+        # MATCH: It is a file and matches the SWMM5 extension.
+        files << full_path
+      end
+    end
+  rescue => e
+    # ERROR HANDLING: If a folder is locked/hidden, log error but continue.
+    puts "ERROR scanning #{directory}: #{e.message}"
+  end
+  
+  return files
+end
+
+# ==============================================================================
+# STEP 1: USER GREETING
+# ==============================================================================
+
+# API NOTE: WSApplication.message_box args: (Text, ButtonStyle, Icon, ReturnBool)
+result = WSApplication.message_box(
+  "SWMM5 Import to ICM InfoWorks\nVersion 2.0\n\n" +
+  "This utility imports standard EPA SWMM5 .inp files into ICM.\n" +
+  "It supports batch processing and automated label cleanup.\n\n" +
+  "Ready to proceed?",
+  "YesNo",       
+  "Information", 
+  false          
+)
+
+# Graceful exit if the user declines
+if result == "No"
+  puts "Script terminated by user at welcome screen."
+  exit
+end
+
+# ==============================================================================
+# STEP 2: IMPORT MODE SELECTION
+# ==============================================================================
+
+# API NOTE: WSApplication.prompt takes an array of arrays to build a form.
+# Format: ['Label Text', 'Data Type', Default Value]
+layout = [
+  ['Select Import Mode (check ONE):', 'READONLY', ''],
+  ['1. Single File', 'BOOLEAN', true],                # Boolean renders as Checkbox
+  ['2. Batch - Directory Only', 'BOOLEAN', false],    
+  ['3. Batch - Include Subdirectories', 'BOOLEAN', false] 
+]
+
+result = WSApplication.prompt('Import Configuration', layout, false)
+
+# Handle "Cancel" button or closing the window (result becomes nil)
+if result.nil?
+  puts "Script terminated by user at mode selection."
+  exit
+end
+
+# Parse the form results. result[1] is the first checkbox, result[2] the second, etc.
+if result[1]
+  import_mode = 'Single File'
+elsif result[2]
+  import_mode = 'Batch - Directory Only'
+elsif result[3]
+  import_mode = 'Batch - Include Subdirectories'
+else
+  import_mode = 'Single File' # Fallback default
+end
+
+# Feedback to the ICM "Output" window
+puts "\n" + "="*70
+puts " CONFIGURATION: #{import_mode}"
+puts "="*70
+
+# ==============================================================================
+# STEP 3: FILE SELECTION LOGIC
+# ==============================================================================
+
+file_paths = []      
+base_directory = nil 
+
+case import_mode
+when 'Single File'
+  # API NOTE: WSApplication.file_dialog triggers the native Windows file picker.
+  # Args: (Open?, Filter, Title, DefaultFile, MultiSelect?, ParentWindow)
+  file_path = WSApplication.file_dialog(
+    true,                 
+    'inp',                
+    'Select SWMM5 Input File',   
+    '',                   
+    false,                
+    nil
+  )
+  
+  if file_path.nil?
+    WSApplication.message_box("No file selected. Exiting.", "OK", "!", false)
+    exit
+  end
+  
+  file_paths << file_path
+  base_directory = File.dirname(file_path)
+
+when 'Batch - Directory Only', 'Batch - Include Subdirectories'
+  # WORKAROUND: ICM Ruby API lacks a specific "Select Folder" dialog.
+  # We ask the user to select a "dummy" file within the target folder 
+  # to resolve the path.
+  WSApplication.message_box(
+    "Folder Selection Required\n\nPlease navigate to your target folder and select ANY file inside it.\n" +
+    "The script will detect the folder path from that file.",
+    "OK", "Information", false
+  )
+  
+  sample_file = WSApplication.file_dialog(true, '*', 'Pick reference file for folder path', '', false, nil)
+  
+  exit if sample_file.nil?
+  
+  # Strip the filename to get the directory
+  base_directory = File.dirname(sample_file)
+  puts "Target Directory: #{base_directory}"
+  
+  # Determine recursion requirement
+  is_recursive = (import_mode == 'Batch - Include Subdirectories')
+  
+  # Populate the file list
+  if is_recursive
+    file_paths = find_inp_files(base_directory, true)
+  else
+    # Standard linear scan of top-level directory only
+    Dir.entries(base_directory).each do |entry|
+      next if entry == '.' || entry == '..' 
+      full_path = File.join(base_directory, entry)
+      if File.file?(full_path) && File.extname(entry).downcase == '.inp'
+        file_paths << full_path
+      end
+    end
+  end
+  
+  # Validation: Ensure we actually have work to do
+  if file_paths.empty?
+    WSApplication.message_box("No .inp files found in: #{base_directory}", "OK", "!", false)
+    exit
+  end
+  
+  puts "Queue size: #{file_paths.length} files"
+end
+
+# ==============================================================================
+# STEP 4: PERFORMANCE CHECK (UX)
+# ==============================================================================
+# Large imports can freeze the computer. We calculate total MB to warn the user.
+
+total_size_mb = 0.0
+file_paths.each do |file|
+  # Bytes -> MB conversion
+  total_size_mb += File.size(file) / (1024.0 * 1024.0)
+end
+
+if total_size_mb > 100
+  response = WSApplication.message_box(
+    "Performance Warning:\nTotal import size is #{total_size_mb.round(1)} MB.\n" +
+    "This process may take several minutes. Continue?",
+    "YesNo", "?", false
+  )
+  exit if response == "No"
+end
+
+# ==============================================================================
+# STEP 5: MODEL GROUP NAMING STRATEGY
+# ==============================================================================
+# We need to determine the name of the "Model Group" (the folder icon in the DB tree)
+# where the data will land.
+
+model_group_names = []
+
+if import_mode == 'Single File'
+  # Suggest the filename as the default Model Group name
+  default_name = File.basename(file_paths.first, '.inp')
+  
+  result = WSApplication.prompt(
+    'Target Name Settings',
+    [
+      ['Model Group Name:', 'STRING', default_name], 
+      ['Append Timestamp (prevents duplicates)?', 'BOOLEAN', true]
+    ],
+    false
+  )
+  exit if result.nil?
+  
+  final_name = result[0]
+  final_name += "_#{Time.now.strftime("%Y%m%d_%H%M")}" if result[1]
+  
+  model_group_names << final_name
+
+else
+  # Batch Mode: Ask for a naming convention
+  use_dir_name = WSApplication.message_box(
+    "Naming Convention:\nPrefix Model Group names with their parent folder name?\n" +
+    "(Useful if filenames like 'Scenario1.inp' are repeated in different folders)", 
+    "YesNo", "?", false
+  ) == "Yes"
+  
+  file_paths.each do |file_path|
+    filename = File.basename(file_path, '.inp')
+    
+    if use_dir_name
+      # Format: ParentFolder_FileName
+      parent = File.basename(File.dirname(file_path))
+      name = "#{parent}_#{filename}"
+    else
+      # Format: FileName
+      name = filename
+    end
+    
+    model_group_names << name
+  end
+end
+
+# ==============================================================================
+# STEP 6: GENERATE CONFIGURATION MANIFEST
+# ==============================================================================
+# The UI script and the Exchange script are two separate processes. They do not
+# share memory. We bridge them by writing a YAML file to disk.
+
+# 1. Get current DB identifier so the worker knows where to connect.
+db_guid = WSApplication.current_database.guid
+
+# 2. Setup Log/Config directory
+config_folder = File.join(base_directory, "ICM Import Log Files")
+Dir.mkdir(config_folder) unless Dir.exist?(config_folder)
+
+# 3. Build the "Job List"
+file_configs = []
+file_paths.each_with_index do |file_path, index|
+  file_configs << {
+    'file_path' => file_path,
+    'model_group_name' => model_group_names[index],
+    'file_basename' => File.basename(file_path)
+  }
+end
+
+# 4. Build the master config hash
+config = {
+  'import_mode' => import_mode,
+  'file_configs' => file_configs, 
+  'database_guid' => db_guid,
+  'cleanup_empty_label_lists' => true, # Hardcoded preference (could be made a user option)
+  'timestamp' => Time.now.to_s
+}
+
+# 5. Serialize to disk
+config_file = File.join(config_folder, 'import_config.yaml')
+File.open(config_file, 'w') { |f| f.write(config.to_yaml) }
+
+puts "Manifest file created at: #{config_file}"
+
+# ==============================================================================
+# STEP 7: EXECUTE BACKGROUND PROCESS
+# ==============================================================================
+
+# Locate the worker script
+exchange_script = File.join(script_dir, 'SWMM5_Import_Exchange_Annotated.rb')
+unless File.exist?(exchange_script)
+  WSApplication.message_box("CRITICAL ERROR:\nMissing companion script 'SWMM5_Import_Exchange_Annotated.rb'.\nEnsure both scripts are in the same folder.", "OK", "!", false)
+  exit
+end
+
+# Locate the ICM Execution Engine (ICMExchange.exe).
+# This path varies by version.
+icm_exchange = nil
+possible_paths = [
+  "C:\\Program Files\\Autodesk\\InfoWorks ICM Ultimate 2026\\ICMExchange.exe",
+  "C:\\Program Files\\Autodesk\\InfoWorks ICM Ultimate 2025\\ICMExchange.exe",
+  "C:\\Program Files\\Autodesk\\InfoWorks ICM Ultimate 2024.2\\ICMExchange.exe"
+]
+
+possible_paths.each do |path|
+  if File.exist?(path)
+    icm_exchange = path
+    break
+  end
+end
+
+if icm_exchange.nil?
+  WSApplication.message_box("System Path Error:\nCould not locate ICMExchange.exe.\nPlease edit the script to update the installation path.", "OK", "!", false)
+  exit
+end
+
+# Set Environment Variable. 
+# This is how we pass the path of the YAML file to the new process.
+ENV['ICM_IMPORT_CONFIG'] = config_file
+
+# Build the Command Line string.
+# Syntax: "PathToExecutable" "PathToRubyScript" /ICM
+# Note: /ICM flag is required for standard ICM database operations.
+command = "\"#{icm_exchange}\" \"#{exchange_script}\" /ICM"
+
+puts "Running background command..."
+
+# Open3.capture2 executes the command and halts this script until the external one finishes.
+# output: The text printed to STDOUT by the worker.
+# status: The exit code (0 = Success, 1 = Error).
+output, status = Open3.capture2(command)
+
+# ==============================================================================
+# STEP 8: POST-PROCESS REPORTING
+# ==============================================================================
+
+# The worker script logs high-level stats to a text file for us to read.
+summary_file = File.join(config_folder, "batch_summary.txt")
+files_processed = 0
+files_successful = 0
+
+if File.exist?(summary_file)
+  # Parse the key=value pairs from the summary file
+  File.readlines(summary_file).each do |line|
+    if line.include?('=')
+      key, value = line.strip.split('=')
+      files_processed = value.to_i if key == 'files_processed'
+      files_successful = value.to_i if key == 'files_successful'
+    end
+  end
+else
+  puts "Warning: No summary file found. The background process may have crashed hard."
+end
+
+# Provide final feedback to user
+if files_successful > 0
+  WSApplication.message_box(
+    "Import Process Complete.\n\n" +
+    "Files Processed: #{files_processed}\n" +
+    "Successful Imports: #{files_successful}\n\n" +
+    "Detailed logs are saved in:\n#{config_folder}",
+    "OK", "Information", false
+  )
+else
+  WSApplication.message_box(
+    "Import Process Finished with Errors.\n\n" +
+    "No files were successfully imported.\n" +
+    "Please check the logs in:\n#{config_folder}",
+    "OK", "!", false
+  )
+end
