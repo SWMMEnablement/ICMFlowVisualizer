@@ -70,20 +70,34 @@ export function MetadataPanel({ selectedNode, fileConfigs = [], statistics, logs
                     )}
                   </div>
 
-                  {selectedNode.metadata && Object.keys(selectedNode.metadata).length > 0 && (
+                  {selectedNode.metadata?.methodName && (
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-sm">Metadata</CardTitle>
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          <Terminal className="w-4 h-4" />
+                          Method Name
+                        </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <dl className="space-y-2 text-xs">
-                          {Object.entries(selectedNode.metadata).map(([key, value]) => (
-                            <div key={key} className="flex justify-between">
-                              <dt className="font-medium text-muted-foreground">{key}:</dt>
-                              <dd className="font-mono">{String(value)}</dd>
-                            </div>
-                          ))}
-                        </dl>
+                        <div className="bg-muted/30 rounded px-3 py-2 font-mono text-xs text-foreground">
+                          {selectedNode.metadata.methodName}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {selectedNode.metadata?.codeSnippet && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          <Terminal className="w-4 h-4" />
+                          Ruby Code
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="bg-muted/30 rounded p-3 overflow-x-auto">
+                          <pre className="font-mono text-xs text-foreground whitespace-pre">{selectedNode.metadata.codeSnippet}</pre>
+                        </div>
                       </CardContent>
                     </Card>
                   )}

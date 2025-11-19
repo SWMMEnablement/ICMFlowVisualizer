@@ -27,47 +27,47 @@ export class MemStorage implements IStorage {
       nodes: [
         { id: 'start', type: 'start', label: 'Start', position: { x: 100, y: 50 } },
         
-        { id: 'welcome', type: 'process', label: 'Welcome Screen', description: 'Display welcome message and ask user to continue', script: 'ui', position: { x: 100, y: 150 } },
+        { id: 'welcome', type: 'process', label: 'Welcome Screen', description: 'Display welcome message and ask user to continue', script: 'ui', position: { x: 100, y: 150 }, metadata: { methodName: 'show_welcome_dialog', codeSnippet: 'message_box("Welcome to SWMM5 Batch Import", "OK", "c")\nWSApplication.message_box("Ready to import?", "YN", "?")' } },
         
-        { id: 'mode_select', type: 'decision', label: 'Select Import Mode', description: 'Choose: Single File, Batch - Directory Only, or Batch - Include Subdirectories', script: 'ui', position: { x: 100, y: 280 } },
+        { id: 'mode_select', type: 'decision', label: 'Select Import Mode', description: 'Choose: Single File, Batch - Directory Only, or Batch - Include Subdirectories', script: 'ui', position: { x: 100, y: 280 }, metadata: { methodName: 'select_import_mode', codeSnippet: 'mode = WSApplication.input_box(\n  "Select mode:",\n  ["Single File", "Batch - Directory Only", "Batch - Subdirectories"],\n  "Single File"\n)' } },
         
-        { id: 'file_select', type: 'process', label: 'Select Files/Directory', description: 'Use file dialog to select .inp files or directory', script: 'ui', position: { x: 100, y: 430 } },
+        { id: 'file_select', type: 'process', label: 'Select Files/Directory', description: 'Use file dialog to select .inp files or directory', script: 'ui', position: { x: 100, y: 430 }, metadata: { methodName: 'select_files', codeSnippet: 'files = WSApplication.file_dialog(\n  true,\n  "inp",\n  "Select SWMM5 .inp files",\n  directory,\n  false,\n  include_subdirs\n)' } },
         
-        { id: 'size_check', type: 'decision', label: 'Size > 100MB?', description: 'Calculate total file size and warn if large batch', script: 'ui', position: { x: 100, y: 560 } },
+        { id: 'size_check', type: 'decision', label: 'Size > 100MB?', description: 'Calculate total file size and warn if large batch', script: 'ui', position: { x: 100, y: 560 }, metadata: { methodName: 'check_file_sizes', codeSnippet: 'total_size = files.sum { |f| File.size(f) }\nif total_size > 100_000_000\n  warn("Large batch detected: #{total_size / 1_000_000}MB")\nend' } },
         
-        { id: 'naming', type: 'process', label: 'Define Model Group Names', description: 'Set naming convention for imported model groups', script: 'ui', position: { x: 100, y: 710 } },
+        { id: 'naming', type: 'process', label: 'Define Model Group Names', description: 'Set naming convention for imported model groups', script: 'ui', position: { x: 100, y: 710 }, metadata: { methodName: 'configure_naming', codeSnippet: 'model_group_names = files.map do |file|\n  base = File.basename(file, ".inp")\n  WSApplication.input_box("Model Group:", base)\nend' } },
         
-        { id: 'config_file', type: 'data', label: 'import_config.yaml', description: 'Configuration file with all import settings', position: { x: 100, y: 840 } },
+        { id: 'config_file', type: 'data', label: 'import_config.yaml', description: 'Configuration file with all import settings', position: { x: 100, y: 840 }, metadata: { codeSnippet: 'config = {\n  files: file_paths,\n  model_groups: model_group_names,\n  cleanup_empty_lists: true,\n  run_validation: false\n}\nFile.write("import_config.yaml", config.to_yaml)' } },
         
-        { id: 'env_var', type: 'process', label: 'Set Environment Variable', description: 'Store config file path in ICM_IMPORT_CONFIG', script: 'ui', position: { x: 100, y: 940 } },
+        { id: 'env_var', type: 'process', label: 'Set Environment Variable', description: 'Store config file path in ICM_IMPORT_CONFIG', script: 'ui', position: { x: 100, y: 940 }, metadata: { methodName: 'set_environment', codeSnippet: 'config_path = File.absolute_path("import_config.yaml")\nENV["ICM_IMPORT_CONFIG"] = config_path\nWSApplication.set_env_var("ICM_IMPORT_CONFIG", config_path)' } },
         
-        { id: 'launch_exchange', type: 'process', label: 'Launch ICMExchange.exe', description: 'Execute Exchange script in headless mode', script: 'ui', position: { x: 100, y: 1070 } },
+        { id: 'launch_exchange', type: 'process', label: 'Launch ICMExchange.exe', description: 'Execute Exchange script in headless mode', script: 'ui', position: { x: 100, y: 1070 }, metadata: { methodName: 'launch_exchange_script', codeSnippet: 'exchange_path = "C:/Program Files/Innovyze/ICMExchange.exe"\nscript_path = File.join(script_folder, "SWMM5_Import_Exchange.rb")\nsystem("#{exchange_path} -r #{script_path}")' } },
         
-        { id: 'retrieve_config', type: 'process', label: 'Retrieve Configuration', description: 'Read config from ENV variable or search filesystem', script: 'exchange', position: { x: 500, y: 50 } },
+        { id: 'retrieve_config', type: 'process', label: 'Retrieve Configuration', description: 'Read config from ENV variable or search filesystem', script: 'exchange', position: { x: 500, y: 50 }, metadata: { methodName: 'load_config', codeSnippet: 'config_path = ENV["ICM_IMPORT_CONFIG"] ||\n  Dir.glob("**/import_config.yaml").first\nconfig = YAML.load_file(config_path)\nfiles = config[:files]' } },
         
-        { id: 'connect_db', type: 'process', label: 'Connect to Database', description: 'Open ICM database using WSApplication', script: 'exchange', position: { x: 500, y: 180 } },
+        { id: 'connect_db', type: 'process', label: 'Connect to Database', description: 'Open ICM database using WSApplication', script: 'exchange', position: { x: 500, y: 180 }, metadata: { methodName: 'open_network', codeSnippet: 'net = WSApplication.current_network\nif net.nil?\n  raise "No network open in ICM"\nend\ndb = net.odic_database' } },
         
-        { id: 'start_log', type: 'process', label: 'Start Log File', description: 'Create timestamped log file in ICM Import Log Files folder', script: 'exchange', position: { x: 500, y: 310 } },
+        { id: 'start_log', type: 'process', label: 'Start Log File', description: 'Create timestamped log file in ICM Import Log Files folder', script: 'exchange', position: { x: 500, y: 310 }, metadata: { methodName: 'initialize_log', codeSnippet: 'timestamp = Time.now.strftime("%Y%m%d_%H%M%S")\nlog_file = "ICM_Import_#{timestamp}.log"\nlog_path = File.join(log_folder, log_file)\n@log = File.open(log_path, "w")' } },
         
-        { id: 'loop_start', type: 'process', label: 'For Each File in Batch', description: 'Main processing loop through all configured files', script: 'exchange', position: { x: 500, y: 440 } },
+        { id: 'loop_start', type: 'process', label: 'For Each File in Batch', description: 'Main processing loop through all configured files', script: 'exchange', position: { x: 500, y: 440 }, metadata: { methodName: 'process_batch', codeSnippet: 'files.each_with_index do |file_path, index|\n  log("Processing #{index + 1} of #{files.size}: #{file_path}")\n  process_single_file(file_path)\nend' } },
         
-        { id: 'file_exists', type: 'decision', label: 'File Exists?', description: 'Check if .inp file is accessible', script: 'exchange', position: { x: 500, y: 570 } },
+        { id: 'file_exists', type: 'decision', label: 'File Exists?', description: 'Check if .inp file is accessible', script: 'exchange', position: { x: 500, y: 570 }, metadata: { codeSnippet: 'unless File.exist?(file_path)\n  log("ERROR: File not found: #{file_path}")\n  next\nend' } },
         
-        { id: 'create_model_group', type: 'process', label: 'Create Model Group', description: 'Create container in database tree', script: 'exchange', position: { x: 700, y: 690 } },
+        { id: 'create_model_group', type: 'process', label: 'Create Model Group', description: 'Create container in database tree', script: 'exchange', position: { x: 700, y: 690 }, metadata: { methodName: 'create_model_group', codeSnippet: 'model_group = net.new_model_object("Model Group")\nmodel_group.id = model_group_name\nmodel_group.write\nnet.current_model_object = model_group' } },
         
-        { id: 'import_data', type: 'process', label: 'Import .inp File', description: 'Execute import_all_sw_model_objects()', script: 'exchange', position: { x: 700, y: 820 } },
+        { id: 'import_data', type: 'process', label: 'Import .inp File', description: 'Execute import_all_sw_model_objects()', script: 'exchange', position: { x: 700, y: 820 }, metadata: { methodName: 'import_swmm_file', codeSnippet: 'importer = WSModelObject.new\nimporter.selected = true\nobjects = importer.import_all_sw_model_objects(\n  file_path,\n  false  # don\'t delete existing\n)' } },
         
-        { id: 'gather_stats', type: 'process', label: 'Gather Statistics', description: 'Count nodes, links, subcatchments', script: 'exchange', position: { x: 700, y: 950 } },
+        { id: 'gather_stats', type: 'process', label: 'Gather Statistics', description: 'Count nodes, links, subcatchments', script: 'exchange', position: { x: 700, y: 950 }, metadata: { methodName: 'collect_statistics', codeSnippet: 'stats = {\n  nodes: net.row_object_collection("_nodes").count,\n  links: net.row_object_collection("_links").count,\n  subcatchments: net.row_object_collection("sw_subcatchment").count\n}\nlog("Imported: #{stats[:nodes]} nodes, #{stats[:links]} links")' } },
         
-        { id: 'cleanup', type: 'decision', label: 'Cleanup Empty Label Lists?', description: 'Remove empty label lists if configured', script: 'exchange', position: { x: 700, y: 1080 } },
+        { id: 'cleanup', type: 'decision', label: 'Cleanup Empty Label Lists?', description: 'Remove empty label lists if configured', script: 'exchange', position: { x: 700, y: 1080 }, metadata: { methodName: 'cleanup_label_lists', codeSnippet: 'if config[:cleanup_empty_lists]\n  net.label_lists.each do |list|\n    if list.labels.empty?\n      list.delete\n      log("Deleted empty label list: #{list.id}")\n    end\n  end\nend' } },
         
-        { id: 'validate', type: 'decision', label: 'Run Validation?', description: 'Optional validation checks on imported network', script: 'exchange', position: { x: 700, y: 1210 } },
+        { id: 'validate', type: 'decision', label: 'Run Validation?', description: 'Optional validation checks on imported network', script: 'exchange', position: { x: 700, y: 1210 }, metadata: { codeSnippet: 'if config[:run_validation]\n  validator = net.validate_all\n  errors = validator.errors\n  log("Validation: #{errors.count} errors")\nend' } },
         
-        { id: 'error_handler', type: 'process', label: 'Error Handler (Rescue)', description: 'Log error, cleanup partial imports, continue to next file', script: 'exchange', position: { x: 300, y: 690 }, status: 'warning' },
+        { id: 'error_handler', type: 'process', label: 'Error Handler (Rescue)', description: 'Log error, cleanup partial imports, continue to next file', script: 'exchange', position: { x: 300, y: 690 }, status: 'warning', metadata: { codeSnippet: 'rescue StandardError => e\n  log("ERROR: #{e.message}")\n  log(e.backtrace.join("\\n"))\n  failed_files << { file: file_path, error: e.message }\n  next  # Continue with next file\nend' } },
         
         { id: 'loop_end', type: 'process', label: 'Next File', description: 'Continue to next file in batch', script: 'exchange', position: { x: 500, y: 1340 } },
         
-        { id: 'summary', type: 'process', label: 'Write Summary File', description: 'Create batch_summary.txt with final statistics', script: 'exchange', position: { x: 500, y: 1470 } },
+        { id: 'summary', type: 'process', label: 'Write Summary File', description: 'Create batch_summary.txt with final statistics', script: 'exchange', position: { x: 500, y: 1470 }, metadata: { methodName: 'write_summary', codeSnippet: 'summary = "Batch Import Summary\\n"\nsummary += "Files Processed: #{files.size}\\n"\nsummary += "Successful: #{success_count}\\n"\nsummary += "Failed: #{failed_files.size}\\n"\nFile.write("batch_summary.txt", summary)' } },
         
         { id: 'end', type: 'end', label: 'End', position: { x: 500, y: 1600 } },
       ],
