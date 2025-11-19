@@ -6,13 +6,17 @@ import { LegendPanel } from "@/components/LegendPanel";
 import { OnboardingDialog } from "@/components/OnboardingDialog";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Info, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Info, PanelRightClose, PanelRightOpen, Filter } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+
+type PhaseFilter = 'all' | 'ui' | 'exchange';
 
 export default function WorkflowVisualization() {
   const [selectedNode, setSelectedNode] = useState<WorkflowNode | undefined>();
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [isLegendOpen, setIsLegendOpen] = useState(false);
+  const [phaseFilter, setPhaseFilter] = useState<PhaseFilter>('all');
 
   const { data: workflowData, isLoading, error } = useQuery<WorkflowDefinition>({
     queryKey: ['/api/workflow'],
@@ -30,6 +34,29 @@ export default function WorkflowVisualization() {
       }
     }
   }, [workflowData, selectedNode]);
+
+  const filteredNodes = workflowData?.nodes.filter(node => {
+    if (phaseFilter === 'all') return true;
+    if (phaseFilter === 'ui') {
+      return node.script === 'ui' || node.type === 'start' || node.type === 'end';
+    }
+    if (phaseFilter === 'exchange') {
+      return node.script === 'exchange' || node.type === 'start' || node.type === 'end';
+    }
+    return true;
+  }) || [];
+
+  const visibleNodeIds = new Set(filteredNodes.map(n => n.id));
+  const filteredEdges = workflowData?.edges.filter(edge => 
+    visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target)
+  ) || [];
+
+  useEffect(() => {
+    if (selectedNode && !visibleNodeIds.has(selectedNode.id)) {
+      const startNode = filteredNodes.find(node => node.id === 'start');
+      setSelectedNode(startNode);
+    }
+  }, [phaseFilter, selectedNode, visibleNodeIds, filteredNodes]);
 
   if (isLoading) {
     return (
@@ -67,7 +94,7 @@ export default function WorkflowVisualization() {
     <div className="h-screen flex flex-col bg-background">
       <OnboardingDialog />
       <header className="border-b border-border bg-card px-6 py-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-6">
           <div>
             <h1 className="text-2xl font-serif font-bold text-foreground">
               SWMM5 to ICM SWMM Workflow Visualizer
@@ -76,6 +103,25 @@ export default function WorkflowVisualization() {
               ICM InfoWorks Batch Import Process
             </p>
           </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Show:</span>
+              <ToggleGroup type="single" value={phaseFilter} onValueChange={(value) => value && setPhaseFilter(value as PhaseFilter)} data-testid="group-phase-filter">
+                <ToggleGroupItem value="all" className="text-xs px-3" data-testid="toggle-filter-all">
+                  All
+                </ToggleGroupItem>
+                <ToggleGroupItem value="ui" className="text-xs px-3" data-testid="toggle-filter-ui">
+                  UI Script
+                </ToggleGroupItem>
+                <ToggleGroupItem value="exchange" className="text-xs px-3" data-testid="toggle-filter-exchange">
+                  Exchange Script
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+          </div>
+
           <div className="flex gap-2">
             <Sheet open={isLegendOpen} onOpenChange={setIsLegendOpen}>
               <SheetTrigger asChild>
@@ -113,8 +159,8 @@ export default function WorkflowVisualization() {
       <div className="flex-1 flex overflow-hidden">
         <div className={isPanelOpen ? "flex-1" : "w-full"}>
           <WorkflowCanvas
-            nodes={workflowData.nodes}
-            edges={workflowData.edges}
+            nodes={filteredNodes}
+            edges={filteredEdges}
             onNodeSelect={setSelectedNode}
             selectedNodeId={selectedNode?.id}
           />
