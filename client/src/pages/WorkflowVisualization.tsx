@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { type WorkflowNode, type WorkflowDefinition, type LogEntry } from "@shared/schema";
 import { WorkflowCanvas } from "@/components/WorkflowCanvas";
 import { MetadataPanel } from "@/components/MetadataPanel";
 import { LegendPanel } from "@/components/LegendPanel";
+import { OnboardingDialog } from "@/components/OnboardingDialog";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Info, PanelRightClose, PanelRightOpen } from "lucide-react";
@@ -20,6 +21,15 @@ export default function WorkflowVisualization() {
   const { data: logs = [], isLoading: logsLoading, error: logsError } = useQuery<LogEntry[]>({
     queryKey: ['/api/logs'],
   });
+
+  useEffect(() => {
+    if (workflowData?.nodes && !selectedNode) {
+      const startNode = workflowData.nodes.find(node => node.id === 'start');
+      if (startNode) {
+        setSelectedNode(startNode);
+      }
+    }
+  }, [workflowData, selectedNode]);
 
   if (isLoading) {
     return (
@@ -55,6 +65,7 @@ export default function WorkflowVisualization() {
 
   return (
     <div className="h-screen flex flex-col bg-background">
+      <OnboardingDialog />
       <header className="border-b border-border bg-card px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
