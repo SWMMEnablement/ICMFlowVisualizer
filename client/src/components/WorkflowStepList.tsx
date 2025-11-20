@@ -2,7 +2,7 @@ import { type WorkflowNode } from "@shared/schema";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, Circle } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface WorkflowStepListProps {
@@ -88,13 +88,6 @@ export function WorkflowStepList({ nodes, selectedNodeId, onNodeSelect }: Workfl
 
           {exchangeNodes.length > 0 && (
             <div>
-              <div className="px-2 mb-2 flex items-center gap-2">
-                <Badge className="bg-secondary/10 text-secondary border-secondary/20 text-xs">
-                  Exchange Script Phase
-                </Badge>
-                <Circle className="w-1 h-1 fill-muted-foreground text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Headless</span>
-              </div>
               <div className="space-y-1">
                 {exchangeNodes.map((node, idx) => renderNodeItem(node, uiNodes.length + idx))}
               </div>
