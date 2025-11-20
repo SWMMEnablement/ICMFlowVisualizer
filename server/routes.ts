@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/workflow', async (_req, res) => {
@@ -28,14 +28,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { message } = req.body;
       
-      const apiKey = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        console.error('Missing Gemini API key. Available env vars:', Object.keys(process.env).filter(k => k.includes('GEMINI') || k.includes('AI')));
-        return res.status(500).json({ error: 'AI service not configured' });
-      }
-
-      const client = new GoogleGenerativeAI({
-        apiKey: apiKey,
+      // Using Replit AI Integrations for Gemini access (no API key required, billed to credits)
+      const ai = new GoogleGenAI({
+        apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY || "dummy",
+        httpOptions: {
+          apiVersion: "",
+          baseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL,
+        },
       });
 
       const workflow = await storage.getWorkflowDefinition();
@@ -49,12 +48,12 @@ ${nodeList}
 User Question:
 ${message}`;
 
-      const model = client.getGenerativeModel({ 
-        model: "gemini-1.5-flash"
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: fullMessage,
       });
 
-      const response = await model.generateContent(fullMessage);
-      const text = response.response.text();
+      const text = response.text || "";
 
       res.json({ response: text });
     } catch (error) {
