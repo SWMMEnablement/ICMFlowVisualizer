@@ -14,7 +14,7 @@ export function parseRubyFile(rubyCode: string): WorkflowDefinition {
     id: 'start',
     type: 'start',
     label: 'Start',
-    position: { x: 100, y: 50 }
+    position: { x: 300, y: 100 }
   });
   previousNodeId = 'start';
   
@@ -38,7 +38,7 @@ export function parseRubyFile(rubyCode: string): WorkflowDefinition {
       type: 'process',
       label: title,
       description: `Ruby code block for ${title}`,
-      position: { x: 100, y: 50 + nodeCount * 150 },
+      position: { x: 300, y: 100 + nodeCount * 200 },
       metadata: {
         methodName: methodName || undefined,
         codeSnippet: codeSnippet.substring(0, 500)
@@ -61,7 +61,7 @@ export function parseRubyFile(rubyCode: string): WorkflowDefinition {
     id: 'end',
     type: 'end',
     label: 'End',
-    position: { x: 100, y: 50 + (nodeCount + 1) * 150 }
+    position: { x: 300, y: 100 + (nodeCount + 1) * 200 }
   });
   
   if (previousNodeId && previousNodeId !== 'end') {
