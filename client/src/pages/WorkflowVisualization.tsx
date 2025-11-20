@@ -10,7 +10,7 @@ import { MarkdownEditor } from "@/components/MarkdownEditor";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Info, PanelRightClose, PanelRightOpen, Filter, List, ListCollapse, Github, FileText } from "lucide-react";
+import { Info, PanelRightClose, PanelRightOpen, Filter, List, ListCollapse, Upload, FileText } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 type PhaseFilter = 'all';
@@ -22,6 +22,7 @@ export default function WorkflowVisualization() {
   const [isStepListOpen, setIsStepListOpen] = useState(true);
   const [isMarkdownOpen, setIsMarkdownOpen] = useState(false);
   const [phaseFilter] = useState<PhaseFilter>('all');
+  const fileInputRef = useState<HTMLInputElement | null>(null)[1];
 
   const { data: workflowData, isLoading, error } = useQuery<WorkflowDefinition>({
     queryKey: ['/api/workflow'],
@@ -53,6 +54,28 @@ export default function WorkflowVisualization() {
       setSelectedNode(startNode);
     }
   }, [phaseFilter]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.currentTarget.files?.[0];
+    if (!file) return;
+    
+    if (!file.name.endsWith('.rb')) {
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      fetch('/api/parse-ruby', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rubyCode: content })
+      })
+        .then(r => r.json())
+        .catch(error => console.error('Error parsing Ruby file:', error));
+    };
+    reader.readAsText(file);
+  };
 
   if (isLoading) {
     return (
@@ -97,21 +120,27 @@ export default function WorkflowVisualization() {
                 ICM InfoWorks Ruby Visualizer
               </h1>
             </div>
+            <input
+              ref={(el) => {
+                if (el) (fileInputRef as any) = el;
+              }}
+              type="file"
+              accept=".rb"
+              onChange={handleFileChange}
+              className="hidden"
+              data-testid="input-ruby-file-header"
+            />
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              asChild
-              data-testid="button-github"
+              onClick={() => {
+                const input = document.querySelector('input[data-testid="input-ruby-file-header"]') as HTMLInputElement;
+                input?.click();
+              }}
+              data-testid="button-file-picker"
             >
-              <a
-                href="https://github.com/innovyze/Open-Source-Support/tree/main/01%20InfoWorks%20ICM/01%20Ruby/02%20SWMM/0022%20-%20Hackathon%20AWI%20OffShoots"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2"
-              >
-                <Github className="w-4 h-4" />
-                <span className="text-xs">View Source</span>
-              </a>
+              <Upload className="w-4 h-4 mr-2" />
+              <span className="text-xs">Open .rb File</span>
             </Button>
           </div>
 
