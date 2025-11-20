@@ -5,7 +5,6 @@ export const workflowNodeSchema = z.object({
   type: z.enum(['start', 'process', 'decision', 'data', 'end']),
   label: z.string(),
   description: z.string().optional(),
-  script: z.enum(['ui', 'exchange']).optional(),
   position: z.object({
     x: z.number(),
     y: z.number()
@@ -70,5 +69,13 @@ export const chatMessageSchema = z.object({
   content: z.string()
 });
 
+export const markdownDocumentSchema = z.object({
+  title: z.string(),
+  content: z.string(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional()
+});
+
 export type LogEntry = z.infer<typeof logEntrySchema>;
 export type ChatMessage = z.infer<typeof chatMessageSchema>;
+export type MarkdownDocument = z.infer<typeof markdownDocumentSchema>;

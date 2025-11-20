@@ -1,13 +1,17 @@
-import { type WorkflowDefinition, type LogEntry } from "@shared/schema";
+import { type WorkflowDefinition, type LogEntry, type MarkdownDocument } from "@shared/schema";
 
 export interface IStorage {
   getWorkflowDefinition(): Promise<WorkflowDefinition>;
   getLogs(): Promise<LogEntry[]>;
+  setWorkflowDefinition(workflow: WorkflowDefinition): Promise<void>;
+  setMarkdownDocument(doc: MarkdownDocument): Promise<void>;
+  getMarkdownDocument(): Promise<MarkdownDocument | null>;
 }
 
 export class MemStorage implements IStorage {
   private workflowDefinition: WorkflowDefinition;
   private logs: LogEntry[];
+  private markdownDocument: MarkdownDocument | null = null;
 
   constructor() {
     this.workflowDefinition = this.initializeWorkflowData();
@@ -20,6 +24,18 @@ export class MemStorage implements IStorage {
 
   async getLogs(): Promise<LogEntry[]> {
     return this.logs;
+  }
+
+  async setWorkflowDefinition(workflow: WorkflowDefinition): Promise<void> {
+    this.workflowDefinition = workflow;
+  }
+
+  async setMarkdownDocument(doc: MarkdownDocument): Promise<void> {
+    this.markdownDocument = { ...doc, updatedAt: new Date().toISOString() };
+  }
+
+  async getMarkdownDocument(): Promise<MarkdownDocument | null> {
+    return this.markdownDocument;
   }
 
   private initializeWorkflowData(): WorkflowDefinition {

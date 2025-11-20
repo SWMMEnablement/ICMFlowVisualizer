@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { GoogleGenAI } from "@google/genai";
+import { parseRubyFile, workflowToMarkdown } from "./ruby-parser";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/workflow', async (_req, res) => {
@@ -24,6 +25,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/parse-ruby', async (req, res) => {
+    try {
+      const { rubyCode } = req.body;
+      if (!rubyCode || typeof rubyCode !== 'string') {
+        return res.status(400).json({ error: 'Invalid Ruby code provided' });
+      }
+      const workflow = parseRubyFile(rubyCode);
+      await storage.setWorkflowDefinition(workflow);
+      res.json(workflow);
+    } catch (error) {
+      console.error('Error parsing Ruby file:', error);
+      res.status(500).json({ error: 'Failed to parse Ruby file' });
+    }
+  });
+
+  app.post('/api/markdown/generate', async (req, res) => {
+    try {
+      const workflow = await storage.getWorkflowDefinition();
+      const markdown = workflowToMarkdown(workflow);
+      await storage.setMarkdownDocument({
+        title: 'Ruby Workflow Documentation',
+        content: markdown
+      });
+      res.json({ content: markdown });
+    } catch (error) {
+      console.error('Error generating markdown:', error);
+      res.status(500).json({ error: 'Failed to generate markdown' });
+    }
+  });
+
+  app.post('/api/markdown/save', async (req, res) => {
+    try {
+      const { title, content } = req.body;
+      await storage.setMarkdownDocument({ title, content });
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error saving markdown:', error);
+      res.status(500).json({ error: 'Failed to save markdown' });
+    }
+  });
+
+  app.get('/api/markdown', async (_req, res) => {
+    try {
+      const doc = await storage.getMarkdownDocument();
+      res.json(doc || { title: '', content: '' });
+    } catch (error) {
+      console.error('Error fetching markdown:', error);
+      res.status(500).json({ error: 'Failed to fetch markdown' });
+    }
+  });
+
   app.post('/api/ai/explain', async (req, res) => {
     try {
       const { message } = req.body;
@@ -40,7 +92,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const workflow = await storage.getWorkflowDefinition();
       const nodeList = workflow.nodes.map(n => `- ${n.label} (${n.type})`).join('\n');
 
-      const fullMessage = `You are an expert in SWMM5 to ICM SWMM workflows and Ruby scripting. Please help explain the following based on the workflow context.
+      const fullMessage = `You are an expert in Ruby scripting. Please help explain the following based on the workflow context.
 
 Workflow Overview:
 ${nodeList}

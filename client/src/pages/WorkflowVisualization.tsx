@@ -5,20 +5,23 @@ import { LegendPanel } from "@/components/LegendPanel";
 import { OnboardingDialog } from "@/components/OnboardingDialog";
 import { WorkflowStepList } from "@/components/WorkflowStepList";
 import { AIAssistant } from "@/components/AIAssistant";
+import { RubyFileUpload } from "@/components/RubyFileUpload";
+import { MarkdownEditor } from "@/components/MarkdownEditor";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Info, PanelRightClose, PanelRightOpen, Filter, List, ListCollapse, Github } from "lucide-react";
+import { Info, PanelRightClose, PanelRightOpen, Filter, List, ListCollapse, Github, FileText } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
-type PhaseFilter = 'all' | 'ui' | 'exchange';
+type PhaseFilter = 'all';
 
 export default function WorkflowVisualization() {
   const [selectedNode, setSelectedNode] = useState<WorkflowNode | undefined>();
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [isLegendOpen, setIsLegendOpen] = useState(false);
   const [isStepListOpen, setIsStepListOpen] = useState(true);
-  const [phaseFilter, setPhaseFilter] = useState<PhaseFilter>('all');
+  const [isMarkdownOpen, setIsMarkdownOpen] = useState(false);
+  const [phaseFilter] = useState<PhaseFilter>('all');
 
   const { data: workflowData, isLoading, error } = useQuery<WorkflowDefinition>({
     queryKey: ['/api/workflow'],
@@ -37,16 +40,7 @@ export default function WorkflowVisualization() {
     }
   }, [workflowData, selectedNode]);
 
-  const filteredNodes = workflowData?.nodes.filter(node => {
-    if (phaseFilter === 'all') return true;
-    if (phaseFilter === 'ui') {
-      return node.script === 'ui' || node.type === 'start' || node.type === 'end';
-    }
-    if (phaseFilter === 'exchange') {
-      return node.script === 'exchange' || node.type === 'start' || node.type === 'end';
-    }
-    return true;
-  }) || [];
+  const filteredNodes = workflowData?.nodes || [];
 
   const visibleNodeIds = new Set(filteredNodes.map(n => n.id));
   const filteredEdges = workflowData?.edges.filter(edge => 
@@ -124,23 +118,6 @@ export default function WorkflowVisualization() {
             </Button>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Show:</span>
-              <ToggleGroup type="single" value={phaseFilter} onValueChange={(value) => value && setPhaseFilter(value as PhaseFilter)} data-testid="group-phase-filter">
-                <ToggleGroupItem value="all" className="text-xs px-3" data-testid="toggle-filter-all">
-                  All
-                </ToggleGroupItem>
-                <ToggleGroupItem value="ui" className="text-xs px-3" data-testid="toggle-filter-ui">
-                  UI Script
-                </ToggleGroupItem>
-                <ToggleGroupItem value="exchange" className="text-xs px-3" data-testid="toggle-filter-exchange">
-                  Exchange Script
-                </ToggleGroupItem>
-              </ToggleGroup>
-            </div>
-          </div>
 
           <div className="flex gap-2">
             <Button
@@ -162,6 +139,17 @@ export default function WorkflowVisualization() {
               )}
             </Button>
             <AIAssistant selectedNode={selectedNode} />
+            <Sheet open={isMarkdownOpen} onOpenChange={setIsMarkdownOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm" data-testid="button-markdown">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Documentation
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[500px] sm:w-[640px]">
+                <MarkdownEditor />
+              </SheetContent>
+            </Sheet>
             <Sheet open={isLegendOpen} onOpenChange={setIsLegendOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" size="sm" data-testid="button-legend">
@@ -195,7 +183,11 @@ export default function WorkflowVisualization() {
         </div>
       </header>
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex overflow-hidden">
+          <RubyFileUpload onSuccess={() => {}} />
+        </div>
+        
         {isStepListOpen && (
           <div className="w-[420px] flex-shrink-0">
             <WorkflowStepList
