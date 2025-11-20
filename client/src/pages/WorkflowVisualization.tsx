@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { type WorkflowNode, type WorkflowDefinition, type LogEntry } from "@shared/schema";
 import { MetadataPanel } from "@/components/MetadataPanel";
 import { LegendPanel } from "@/components/LegendPanel";
@@ -22,7 +22,7 @@ export default function WorkflowVisualization() {
   const [isStepListOpen, setIsStepListOpen] = useState(true);
   const [isMarkdownOpen, setIsMarkdownOpen] = useState(false);
   const [phaseFilter] = useState<PhaseFilter>('all');
-  const fileInputRef = useState<HTMLInputElement | null>(null)[1];
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: workflowData, isLoading, error } = useQuery<WorkflowDefinition>({
     queryKey: ['/api/workflow'],
@@ -121,9 +121,7 @@ export default function WorkflowVisualization() {
               </h1>
             </div>
             <input
-              ref={(el) => {
-                if (el) (fileInputRef as any) = el;
-              }}
+              ref={fileInputRef}
               type="file"
               accept=".rb"
               onChange={handleFileChange}
