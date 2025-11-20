@@ -65,4 +65,10 @@ export const logEntrySchema = z.object({
   file: z.string().optional()
 });
 
+export const chatMessageSchema = z.object({
+  role: z.enum(['user', 'assistant']),
+  content: z.string()
+});
+
 export type LogEntry = z.infer<typeof logEntrySchema>;
+export type ChatMessage = z.infer<typeof chatMessageSchema>;

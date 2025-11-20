@@ -4,6 +4,7 @@ import { MetadataPanel } from "@/components/MetadataPanel";
 import { LegendPanel } from "@/components/LegendPanel";
 import { OnboardingDialog } from "@/components/OnboardingDialog";
 import { WorkflowStepList } from "@/components/WorkflowStepList";
+import { AIAssistant } from "@/components/AIAssistant";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -160,6 +161,7 @@ export default function WorkflowVisualization() {
                 </>
               )}
             </Button>
+            <AIAssistant />
             <Sheet open={isLegendOpen} onOpenChange={setIsLegendOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" size="sm" data-testid="button-legend">
