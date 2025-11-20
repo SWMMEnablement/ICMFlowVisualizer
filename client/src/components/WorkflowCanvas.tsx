@@ -61,33 +61,6 @@ export function WorkflowCanvas({ nodes, edges, onNodeSelect, selectedNodeId }: W
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-background">
-      <div className="absolute top-4 right-4 z-10 flex gap-2">
-        <Button
-          size="icon"
-          variant="secondary"
-          onClick={handleZoomIn}
-          data-testid="button-zoom-in"
-        >
-          <ZoomIn className="w-4 h-4" />
-        </Button>
-        <Button
-          size="icon"
-          variant="secondary"
-          onClick={handleZoomOut}
-          data-testid="button-zoom-out"
-        >
-          <ZoomOut className="w-4 h-4" />
-        </Button>
-        <Button
-          size="icon"
-          variant="secondary"
-          onClick={handleReset}
-          data-testid="button-reset-view"
-        >
-          <Maximize2 className="w-4 h-4" />
-        </Button>
-      </div>
-
       <div
         ref={canvasRef}
         className={cn(
