@@ -5,7 +5,7 @@ import { LegendPanel } from "@/components/LegendPanel";
 import { OnboardingDialog } from "@/components/OnboardingDialog";
 import { WorkflowStepList } from "@/components/WorkflowStepList";
 import { AIAssistant } from "@/components/AIAssistant";
-import { RubyFileUpload } from "@/components/RubyFileUpload";
+import { WorkflowCanvas } from "@/components/WorkflowCanvas";
 import { MarkdownEditor } from "@/components/MarkdownEditor";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -219,7 +219,12 @@ export default function WorkflowVisualization() {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="flex-1 flex overflow-hidden">
-          <RubyFileUpload onSuccess={() => {}} />
+          <WorkflowCanvas
+            nodes={filteredNodes}
+            edges={filteredEdges}
+            onNodeSelect={setSelectedNode}
+            selectedNodeId={selectedNode?.id}
+          />
         </div>
         
         {isStepListOpen && (
