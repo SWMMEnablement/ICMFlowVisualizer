@@ -42,11 +42,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const response = await client.chat.completions.create({
         model: "gpt-4o-mini",
         max_tokens: 1024,
-        system: `You are a helpful assistant that explains the SWMM5 to ICM SWMM batch import workflow. You help engineers understand what each step does, how the UI and Exchange scripts work together, and explain the file relationships and import process. Be concise, technical, but clear. 
+        messages: [
+          {
+            role: "system",
+            content: `You are a helpful assistant that explains the SWMM5 to ICM SWMM batch import workflow. You help engineers understand what each step does, how the UI and Exchange scripts work together, and explain the file relationships and import process. Be concise, technical, but clear. 
 
 Current Workflow Structure:
-${workflowContext}`,
-        messages: [
+${workflowContext}`
+          },
           {
             role: "user",
             content: message
