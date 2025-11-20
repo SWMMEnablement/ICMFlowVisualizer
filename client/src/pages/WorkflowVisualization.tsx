@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { type WorkflowNode, type WorkflowDefinition, type LogEntry } from "@shared/schema";
-import { WorkflowCanvas } from "@/components/WorkflowCanvas";
 import { MetadataPanel } from "@/components/MetadataPanel";
 import { LegendPanel } from "@/components/LegendPanel";
 import { OnboardingDialog } from "@/components/OnboardingDialog";
@@ -205,17 +204,8 @@ export default function WorkflowVisualization() {
           </div>
         )}
 
-        <div className="flex-1 min-w-0">
-          <WorkflowCanvas
-            nodes={filteredNodes}
-            edges={filteredEdges}
-            onNodeSelect={setSelectedNode}
-            selectedNodeId={selectedNode?.id}
-          />
-        </div>
-
         {isPanelOpen && (
-          <div className="w-[625px] flex-shrink-0">
+          <div className="flex-1 min-w-0">
             <MetadataPanel
               selectedNode={selectedNode}
               fileConfigs={workflowData.fileConfigs}
