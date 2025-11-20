@@ -161,7 +161,7 @@ export default function WorkflowVisualization() {
                 </>
               )}
             </Button>
-            <AIAssistant />
+            <AIAssistant selectedNode={selectedNode} />
             <Sheet open={isLegendOpen} onOpenChange={setIsLegendOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" size="sm" data-testid="button-legend">

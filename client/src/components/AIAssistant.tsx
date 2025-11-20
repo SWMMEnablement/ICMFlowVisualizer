@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { type WorkflowNode } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sparkles, Send } from "lucide-react";
+import { Sparkles, Send, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Message {
@@ -11,7 +12,11 @@ interface Message {
   content: string;
 }
 
-export function AIAssistant() {
+interface AIAssistantProps {
+  selectedNode?: WorkflowNode;
+}
+
+export function AIAssistant({ selectedNode }: AIAssistantProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -22,10 +27,10 @@ export function AIAssistant() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSendMessage = async () => {
-    if (!input.trim()) return;
+  const handleSendMessage = async (messageText?: string) => {
+    const userMessage = messageText || input.trim();
+    if (!userMessage) return;
 
-    const userMessage = input;
     setInput("");
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setIsLoading(true);
@@ -50,6 +55,12 @@ export function AIAssistant() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleExplainCode = () => {
+    if (!selectedNode?.metadata?.codeSnippet) return;
+    const explanationRequest = `Explain what this Ruby code does:\n\n\`\`\`ruby\n${selectedNode.metadata.codeSnippet}\n\`\`\`\n\nContext: This is from the "${selectedNode.label}" step of the workflow (${selectedNode.script} script).`;
+    handleSendMessage(explanationRequest);
   };
 
   return (
@@ -114,13 +125,26 @@ export function AIAssistant() {
             />
             <Button
               size="sm"
-              onClick={handleSendMessage}
+              onClick={() => handleSendMessage()}
               disabled={isLoading || !input.trim()}
               data-testid="button-send-message"
             >
               <Send className="w-4 h-4" />
             </Button>
           </div>
+          {selectedNode?.metadata?.codeSnippet && (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={handleExplainCode}
+              disabled={isLoading}
+              className="w-full"
+              data-testid="button-explain-code"
+            >
+              <Zap className="w-4 h-4 mr-2" />
+              Explain Selected Code
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
