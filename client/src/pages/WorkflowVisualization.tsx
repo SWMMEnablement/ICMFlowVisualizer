@@ -96,9 +96,6 @@ export default function WorkflowVisualization() {
               <h1 className="text-2xl font-serif font-bold text-foreground">
                 ICM InfoWorks Ruby Visualizer
               </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Interactive Ruby Code Workflow Analyzer
-              </p>
             </div>
             <Button
               variant="ghost"
