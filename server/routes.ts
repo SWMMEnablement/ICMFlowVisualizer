@@ -28,6 +28,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { message } = req.body;
       
+      if (!process.env.AI_INTEGRATIONS_GEMINI_API_KEY) {
+        console.error('Missing API key');
+        return res.status(500).json({ error: 'AI service not configured' });
+      }
+
       const client = new GoogleGenerativeAI({
         apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY,
       });
@@ -39,7 +44,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }, null, 2);
 
       const model = client.getGenerativeModel({ 
-        model: "gemini-3-pro-preview",
+        model: "gemini-1.5-flash",
         systemInstruction: `You are a helpful assistant that explains the SWMM5 to ICM SWMM batch import workflow. You help engineers understand what each step does, how the UI and Exchange scripts work together, and explain the file relationships and import process. Be concise, technical, but clear. 
 
 Current Workflow Structure:
