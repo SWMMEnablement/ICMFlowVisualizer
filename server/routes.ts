@@ -28,35 +28,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { message } = req.body;
       
-      if (!process.env.AI_INTEGRATIONS_GEMINI_API_KEY) {
-        console.error('Missing API key');
+      const apiKey = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        console.error('Missing Gemini API key. Available env vars:', Object.keys(process.env).filter(k => k.includes('GEMINI') || k.includes('AI')));
         return res.status(500).json({ error: 'AI service not configured' });
       }
 
       const client = new GoogleGenerativeAI({
-        apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY,
+        apiKey: apiKey,
       });
 
       const workflow = await storage.getWorkflowDefinition();
-      const workflowContext = JSON.stringify({
-        nodes: workflow.nodes.map(n => ({ id: n.id, label: n.label, type: n.type, script: n.script, description: n.description })),
-        statistics: workflow.statistics
-      }, null, 2);
+      const nodeList = workflow.nodes.map(n => `- ${n.label} (${n.type})`).join('\n');
+
+      const fullMessage = `You are an expert in SWMM5 to ICM SWMM workflows and Ruby scripting. Please help explain the following based on the workflow context.
+
+Workflow Overview:
+${nodeList}
+
+User Question:
+${message}`;
 
       const model = client.getGenerativeModel({ 
-        model: "gemini-1.5-flash",
-        systemInstruction: `You are a helpful assistant that explains the SWMM5 to ICM SWMM batch import workflow. You help engineers understand what each step does, how the UI and Exchange scripts work together, and explain the file relationships and import process. Be concise, technical, but clear. 
-
-Current Workflow Structure:
-${workflowContext}`
+        model: "gemini-1.5-flash"
       });
 
-      const response = await model.generateContent(message);
+      const response = await model.generateContent(fullMessage);
       const text = response.response.text();
 
       res.json({ response: text });
     } catch (error) {
-      console.error('Error in AI explanation:', error);
+      console.error('Error in AI explanation:', error instanceof Error ? error.message : String(error));
       res.status(500).json({ error: 'Failed to generate explanation' });
     }
   });
