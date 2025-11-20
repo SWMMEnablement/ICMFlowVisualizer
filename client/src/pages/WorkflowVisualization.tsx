@@ -23,6 +23,7 @@ export default function WorkflowVisualization() {
   const [isStepListOpen, setIsStepListOpen] = useState(true);
   const [isMarkdownOpen, setIsMarkdownOpen] = useState(false);
   const [phaseFilter] = useState<PhaseFilter>('all');
+  const [isParsingFile, setIsParsingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: workflowData, isLoading, error } = useQuery<WorkflowDefinition>({
@@ -64,6 +65,7 @@ export default function WorkflowVisualization() {
       return;
     }
 
+    setIsParsingFile(true);
     const reader = new FileReader();
     reader.onload = (event) => {
       const content = event.target?.result as string;
@@ -76,8 +78,12 @@ export default function WorkflowVisualization() {
         .then(() => {
           queryClient.invalidateQueries({ queryKey: ['/api/workflow'] });
           setSelectedNode(undefined);
+          setIsParsingFile(false);
         })
-        .catch(error => console.error('Error parsing Ruby file:', error));
+        .catch(error => {
+          console.error('Error parsing Ruby file:', error);
+          setIsParsingFile(false);
+        });
     };
     reader.readAsText(file);
   };
@@ -218,11 +224,20 @@ export default function WorkflowVisualization() {
         
         {isStepListOpen && (
           <div className="w-[420px] flex-shrink-0">
-            <WorkflowStepList
-              nodes={filteredNodes}
-              selectedNodeId={selectedNode?.id}
-              onNodeSelect={setSelectedNode}
-            />
+            {isParsingFile ? (
+              <div className="h-full bg-card border-r border-border flex items-center justify-center">
+                <div className="text-center space-y-3">
+                  <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                  <p className="text-xs text-muted-foreground">Parsing Ruby file...</p>
+                </div>
+              </div>
+            ) : (
+              <WorkflowStepList
+                nodes={filteredNodes}
+                selectedNodeId={selectedNode?.id}
+                onNodeSelect={setSelectedNode}
+              />
+            )}
           </div>
         )}
 
