@@ -30,8 +30,8 @@ export function WorkflowNodeComponent({ node, isSelected, onClick }: WorkflowNod
   };
 
   const getNodeStyle = () => {
-    const baseStyle = "absolute transition-all duration-100 cursor-pointer font-sans text-sm";
-    const selectedStyle = isSelected ? "ring-2 ring-primary ring-offset-2" : "";
+    const baseStyle = "absolute transition-all duration-200 cursor-pointer font-sans text-base";
+    const selectedStyle = isSelected ? "ring-4 ring-primary ring-offset-4 ring-offset-background shadow-lg shadow-primary/20 scale-105" : "";
     
     switch (node.type) {
       case 'start':
@@ -39,13 +39,13 @@ export function WorkflowNodeComponent({ node, isSelected, onClick }: WorkflowNod
         return cn(
           baseStyle,
           selectedStyle,
-          "rounded-full bg-card border-2 border-primary flex items-center justify-center px-6 py-3 min-w-[140px] hover-elevate"
+          "rounded-full bg-card border-2 border-primary flex items-center justify-center px-7 py-4 min-w-[160px] hover-elevate"
         );
       case 'process':
         return cn(
           baseStyle,
           selectedStyle,
-          "rounded-md bg-card border-2 border-card-border flex items-center justify-center px-5 py-4 min-w-[180px] min-h-[60px] hover-elevate",
+          "rounded-md bg-card border-2 border-card-border flex items-center justify-center px-6 py-5 min-w-[200px] min-h-[70px] hover-elevate",
           node.script === 'ui' && "border-primary/60",
           node.script === 'exchange' && "border-secondary/60"
         );
@@ -53,18 +53,18 @@ export function WorkflowNodeComponent({ node, isSelected, onClick }: WorkflowNod
         return cn(
           baseStyle,
           selectedStyle,
-          "bg-card border-2 border-warning/60 flex items-center justify-center px-6 py-5 min-w-[150px] min-h-[90px] hover-elevate",
+          "bg-card border-2 border-warning/60 flex items-center justify-center px-7 py-6 min-w-[170px] min-h-[100px] hover-elevate",
           "transform rotate-45"
         );
       case 'data':
         return cn(
           baseStyle,
           selectedStyle,
-          "bg-card border-2 border-muted-foreground/30 px-5 py-3 min-w-[160px] hover-elevate",
+          "bg-card border-2 border-muted-foreground/30 px-6 py-4 min-w-[180px] hover-elevate",
           "clip-path-parallelogram"
         );
       default:
-        return cn(baseStyle, selectedStyle, "bg-card border border-border rounded-md px-4 py-3");
+        return cn(baseStyle, selectedStyle, "bg-card border border-border rounded-md px-5 py-4");
     }
   };
 
@@ -80,15 +80,15 @@ export function WorkflowNodeComponent({ node, isSelected, onClick }: WorkflowNod
     >
       {node.type === 'decision' ? (
         <div className="transform -rotate-45 flex flex-col items-center gap-1">
-          <div className="font-medium text-center text-xs leading-tight">{node.label}</div>
+          <div className="font-semibold text-center text-sm leading-tight">{node.label}</div>
           {node.status && <div className="mt-1">{getStatusIcon()}</div>}
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-1.5">
+        <div className="flex flex-col items-center gap-2">
           <div className="flex items-center gap-2">
             {node.status && getStatusIcon()}
             <span className={cn(
-              "font-medium text-center leading-tight",
+              "font-semibold text-center leading-tight",
               node.type === 'start' || node.type === 'end' ? "text-primary" : ""
             )}>{node.label}</span>
           </div>

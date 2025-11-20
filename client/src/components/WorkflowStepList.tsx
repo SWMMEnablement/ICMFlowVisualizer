@@ -23,33 +23,39 @@ export function WorkflowStepList({ nodes, selectedNodeId, onNodeSelect }: Workfl
         key={node.id}
         variant="ghost"
         className={cn(
-          "w-full justify-start text-left h-auto py-3 px-3 hover-elevate",
-          isSelected && "bg-accent"
+          "w-full justify-start text-left h-auto py-3 px-3 hover-elevate transition-all duration-200",
+          isSelected && "bg-primary/10 border-l-4 border-primary shadow-md"
         )}
         onClick={() => onNodeSelect(node)}
         data-testid={`step-item-${node.id}`}
       >
         <div className="flex items-start gap-3 w-full">
           <div className={cn(
-            "shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold mt-0.5",
+            "shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold mt-0.5 transition-all duration-200",
             isSelected 
-              ? "bg-primary text-primary-foreground" 
+              ? "bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2" 
               : "bg-muted text-muted-foreground"
           )}>
             {index + 1}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-medium text-sm leading-tight mb-1">
+            <div className={cn(
+              "leading-tight mb-1 transition-all duration-200",
+              isSelected ? "font-semibold text-base text-primary" : "font-medium text-sm"
+            )}>
               {node.label}
             </div>
             {node.description && (
-              <div className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+              <div className={cn(
+                "text-xs line-clamp-2 leading-relaxed",
+                isSelected ? "text-foreground" : "text-muted-foreground"
+              )}>
                 {node.description}
               </div>
             )}
           </div>
           {isSelected && (
-            <ChevronRight className="w-4 h-4 text-primary shrink-0 mt-1" />
+            <ChevronRight className="w-5 h-5 text-primary shrink-0 mt-1 animate-pulse" />
           )}
         </div>
       </Button>
