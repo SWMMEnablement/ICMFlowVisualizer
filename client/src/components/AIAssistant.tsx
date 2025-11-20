@@ -62,10 +62,13 @@ export function AIAssistant() {
       </DialogTrigger>
       <DialogContent className="w-full max-w-2xl h-[600px] flex flex-col" data-testid="dialog-ai-assistant">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary" />
-            Workflow Explainer
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              Workflow Explainer
+            </DialogTitle>
+            <span className="text-xs text-muted-foreground font-mono">GPT-4o Mini</span>
+          </div>
         </DialogHeader>
         
         <ScrollArea className="flex-1 pr-4 mb-4">
