@@ -12,6 +12,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Info, PanelRightClose, PanelRightOpen, List, ListCollapse, Upload, FileText } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 
 type PhaseFilter = 'all';
 
@@ -72,6 +73,10 @@ export default function WorkflowVisualization() {
         body: JSON.stringify({ rubyCode: content })
       })
         .then(r => r.json())
+        .then(() => {
+          queryClient.invalidateQueries({ queryKey: ['/api/workflow'] });
+          setSelectedNode(undefined);
+        })
         .catch(error => console.error('Error parsing Ruby file:', error));
     };
     reader.readAsText(file);
@@ -132,8 +137,7 @@ export default function WorkflowVisualization() {
               variant="outline"
               size="sm"
               onClick={() => {
-                const input = document.querySelector('input[data-testid="input-ruby-file-header"]') as HTMLInputElement;
-                input?.click();
+                fileInputRef.current?.click();
               }}
               data-testid="button-file-picker"
             >
