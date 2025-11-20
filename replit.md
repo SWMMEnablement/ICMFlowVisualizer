@@ -1,10 +1,10 @@
-# SWMM5 to ICM SWMM Workflow Visualization Tool
+# ICM InfoWorks Ruby Visualizer
 
 ## Overview
 
-This is an interactive visualization tool for the SWMM5 to ICM SWMM batch import workflow into ICM InfoWorks networks. The application provides a visual diagram of the Ruby script processes, file relationships, and import statistics for hydraulic modeling workflows. It displays workflow nodes representing different stages of the import process (UI interactions, Exchange script operations, database operations) connected by edges showing process flow and data relationships.
+This is an interactive visualization and documentation tool for analyzing Ruby code workflows in ICM InfoWorks. The application parses Ruby files to extract workflow steps, generate visual diagrams of the process flow, and create editable markdown documentation. It allows engineers to understand Ruby script structure by visualizing the sequence of operations, identifying key steps, and automatically generating comprehensive documentation that can be customized and exported.
 
-The application serves as a documentation and monitoring tool, helping engineers understand the complex batch import process by visualizing the sequence of operations, decision points, file dependencies, and execution status of each workflow stage.
+The application serves as both a code analysis and documentation tool, helping engineers quickly understand complex Ruby automation scripts by parsing the source code and presenting it in an intuitive, interactive format.
 
 ## Recent Changes
 

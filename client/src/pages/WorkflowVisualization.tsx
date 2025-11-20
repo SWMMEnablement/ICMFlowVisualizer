@@ -94,10 +94,10 @@ export default function WorkflowVisualization() {
           <div className="flex items-center gap-3">
             <div>
               <h1 className="text-2xl font-serif font-bold text-foreground">
-                SWMM5 to ICM SWMM Workflow Visualizer
+                ICM InfoWorks Ruby Visualizer
               </h1>
               <p className="text-sm text-muted-foreground mt-1">
-                ICM InfoWorks Batch Import Process
+                Interactive Ruby Code Workflow Analyzer
               </p>
             </div>
             <Button
