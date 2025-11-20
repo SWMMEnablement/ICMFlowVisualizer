@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/workflow', async (_req, res) => {
@@ -26,11 +26,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/ai/explain', async (req, res) => {
     try {
-      const { message, context } = req.body;
+      const { message } = req.body;
       
-      const client = new OpenAI({
-        apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-        baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+      const client = new GoogleGenerativeAI({
+        apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY,
       });
 
       const workflow = await storage.getWorkflowDefinition();
@@ -39,30 +38,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         statistics: workflow.statistics
       }, null, 2);
 
-      const response = await client.chat.completions.create({
-        model: "gpt-4o-mini",
-        max_tokens: 1024,
-        messages: [
-          {
-            role: "system",
-            content: `You are a helpful assistant that explains the SWMM5 to ICM SWMM batch import workflow. You help engineers understand what each step does, how the UI and Exchange scripts work together, and explain the file relationships and import process. Be concise, technical, but clear. 
+      const model = client.getGenerativeModel({ 
+        model: "gemini-3-pro-preview",
+        systemInstruction: `You are a helpful assistant that explains the SWMM5 to ICM SWMM batch import workflow. You help engineers understand what each step does, how the UI and Exchange scripts work together, and explain the file relationships and import process. Be concise, technical, but clear. 
 
 Current Workflow Structure:
 ${workflowContext}`
-          },
-          {
-            role: "user",
-            content: message
-          }
-        ]
       });
 
-      const assistantMessage = response.choices[0]?.message?.content;
-      if (assistantMessage) {
-        res.json({ response: assistantMessage });
-      } else {
-        res.status(500).json({ error: 'Unexpected response type from AI' });
-      }
+      const response = await model.generateContent(message);
+      const text = response.response.text();
+
+      res.json({ response: text });
     } catch (error) {
       console.error('Error in AI explanation:', error);
       res.status(500).json({ error: 'Failed to generate explanation' });

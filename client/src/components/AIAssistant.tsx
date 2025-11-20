@@ -67,7 +67,7 @@ export function AIAssistant() {
               <Sparkles className="w-5 h-5 text-primary" />
               Workflow Explainer
             </DialogTitle>
-            <span className="text-xs text-muted-foreground font-mono">GPT-4o Mini</span>
+            <span className="text-xs text-muted-foreground font-mono">Gemini 3</span>
           </div>
         </DialogHeader>
         
