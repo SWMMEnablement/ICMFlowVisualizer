@@ -98,23 +98,29 @@ export function AIAssistant() {
           </div>
         </ScrollArea>
 
-        <div className="flex gap-2">
-          <Input
-            placeholder="Ask about the workflow..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-            disabled={isLoading}
-            data-testid="input-ai-message"
-          />
-          <Button
-            size="sm"
-            onClick={handleSendMessage}
-            disabled={isLoading || !input.trim()}
-            data-testid="button-send-message"
-          >
-            <Send className="w-4 h-4" />
-          </Button>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-xs text-muted-foreground">Your question</label>
+            <span className="text-xs text-muted-foreground font-mono">Powered by Gemini 3</span>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Ask about the workflow..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+              disabled={isLoading}
+              data-testid="input-ai-message"
+            />
+            <Button
+              size="sm"
+              onClick={handleSendMessage}
+              disabled={isLoading || !input.trim()}
+              data-testid="button-send-message"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
