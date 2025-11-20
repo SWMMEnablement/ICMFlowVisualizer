@@ -197,7 +197,7 @@ export default function WorkflowVisualization() {
 
       <div className="flex-1 flex overflow-hidden">
         {isStepListOpen && (
-          <div className="w-[320px] flex-shrink-0">
+          <div className="w-[420px] flex-shrink-0">
             <WorkflowStepList
               nodes={filteredNodes}
               selectedNodeId={selectedNode?.id}
