@@ -10,7 +10,7 @@ import { MarkdownEditor } from "@/components/MarkdownEditor";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Info, PanelRightClose, PanelRightOpen, Filter, List, ListCollapse, Upload, FileText } from "lucide-react";
+import { Info, PanelRightClose, PanelRightOpen, List, ListCollapse, Upload, FileText } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 type PhaseFilter = 'all';

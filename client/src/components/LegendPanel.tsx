@@ -38,7 +38,7 @@ export function LegendPanel() {
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <div className="w-16 h-1 bg-primary rounded" />
-              <span>UI Script Phase</span>
+              <span>Ruby Script Phase</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-16 h-1 bg-secondary rounded" />

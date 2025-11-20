@@ -97,7 +97,7 @@ export function WorkflowNodeComponent({ node, isSelected, onClick }: WorkflowNod
               "text-xs px-2 py-0.5 rounded-full font-mono",
               node.script === 'ui' ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
             )}>
-              {node.script === 'ui' ? 'UI Script' : 'Exchange Script'}
+              {node.script === 'ui' ? 'Ruby Script' : 'Exchange Script'}
             </span>
           )}
         </div>

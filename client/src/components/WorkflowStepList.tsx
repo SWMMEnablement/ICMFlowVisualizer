@@ -77,7 +77,7 @@ export function WorkflowStepList({ nodes, selectedNodeId, onNodeSelect }: Workfl
             <div>
               <div className="px-2 mb-2">
                 <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">
-                  UI Script Phase
+                  Ruby Script Phase
                 </Badge>
               </div>
               <div className="space-y-1">
