@@ -8,7 +8,7 @@ import { WorkflowStepList } from "@/components/WorkflowStepList";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Info, PanelRightClose, PanelRightOpen, Filter, List, ListCollapse } from "lucide-react";
+import { Info, PanelRightClose, PanelRightOpen, Filter, List, ListCollapse, Github } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 type PhaseFilter = 'all' | 'ui' | 'exchange';
@@ -97,13 +97,31 @@ export default function WorkflowVisualization() {
       <OnboardingDialog />
       <header className="border-b border-border bg-card px-6 py-4">
         <div className="flex items-center justify-between gap-6">
-          <div>
-            <h1 className="text-2xl font-serif font-bold text-foreground">
-              SWMM5 to ICM SWMM Workflow Visualizer
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              ICM InfoWorks Batch Import Process
-            </p>
+          <div className="flex items-center gap-3">
+            <div>
+              <h1 className="text-2xl font-serif font-bold text-foreground">
+                SWMM5 to ICM SWMM Workflow Visualizer
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                ICM InfoWorks Batch Import Process
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              data-testid="button-github"
+            >
+              <a
+                href="https://github.com/innovyze/Open-Source-Support/tree/main/01%20InfoWorks%20ICM/01%20Ruby/02%20SWMM/0022%20-%20Hackathon%20AWI%20OffShoots"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2"
+              >
+                <Github className="w-4 h-4" />
+                <span className="text-xs">View Source</span>
+              </a>
+            </Button>
           </div>
 
           <div className="flex items-center gap-3">
