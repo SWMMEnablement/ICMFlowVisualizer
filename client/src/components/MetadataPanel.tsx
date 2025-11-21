@@ -194,7 +194,7 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
             {rubyCode && (
               <TabsTrigger value="nano" className="text-xs" data-testid="tab-nano">
                 <Terminal className="w-3 h-3 mr-1" />
-                Explain
+                Nano Banana
               </TabsTrigger>
             )}
             {rubyCode && (
