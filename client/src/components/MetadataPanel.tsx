@@ -111,29 +111,8 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
 
   useEffect(() => {
     if (mermaidDiagram && mermaidRef.current) {
-      try {
-        // Clear previous content
-        mermaidRef.current.innerHTML = '';
-        
-        // Create a unique ID for this diagram
-        const diagramId = `mermaid-${Date.now()}`;
-        
-        // Create container with the diagram
-        const div = document.createElement('div');
-        div.id = diagramId;
-        div.className = 'mermaid';
-        div.textContent = mermaidDiagram;
-        mermaidRef.current.appendChild(div);
-        
-        // Initialize and render
-        mermaid.contentLoaded();
-        mermaid.run();
-      } catch (error) {
-        console.error('Error rendering mermaid diagram:', error);
-        if (mermaidRef.current) {
-          mermaidRef.current.innerHTML = '<p class="text-xs text-muted-foreground p-4">Diagram could not be rendered</p>';
-        }
-      }
+      // ASCII diagram - just display as plain text
+      mermaidRef.current.innerHTML = `<pre className="whitespace-pre-wrap font-mono text-xs p-4">${mermaidDiagram}</pre>`;
     }
   }, [mermaidDiagram]);
 
@@ -440,7 +419,7 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
                       <CardTitle className="text-sm">Code Structure Diagram</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div ref={mermaidRef} className="flex justify-center items-center w-full min-h-96 overflow-auto bg-muted/20 rounded p-4" />
+                      <div ref={mermaidRef} className="w-full overflow-auto bg-muted/20 rounded p-4 font-mono text-sm" />
                     </CardContent>
                   </Card>
                 ) : null}

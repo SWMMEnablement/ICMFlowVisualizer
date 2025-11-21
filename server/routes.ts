@@ -219,61 +219,82 @@ ${code}
       const ifMatches = code.match(/if\s+/g) || [];
       const loopMatches = code.match(/\.each|while|until/g) || [];
 
-      // Build a simple, valid mermaid diagram
-      let diagram = 'graph TD\n';
-      
-      const nodes: { id: string; label: string }[] = [];
-      let nodeId = 0;
-      
-      // Add entry point
-      nodes.push({ id: 'A', label: 'Start' });
+      // Build ASCII diagram
+      let diagram = '┌─ CODE STRUCTURE DIAGRAM ─┐\n\n';
+      diagram += '  ┌──────────────┐\n';
+      diagram += '  │    START     │\n';
+      diagram += '  └──────┬───────┘\n';
+      diagram += '         │\n';
       
       // Add classes if present
       if (classMatches.length > 0) {
-        const classId = String.fromCharCode(65 + nodes.length);
-        const classLabel = classMatches.length === 1 ? classMatches[0] : `Classes (${classMatches.length})`;
-        nodes.push({ id: classId, label: classLabel });
+        diagram += '  ┌──────────────────────────────┐\n';
+        if (classMatches.length === 1) {
+          diagram += `  │  CLASS: ${classMatches[0].padEnd(18)}  │\n`;
+        } else {
+          diagram += `  │  CLASSES (${classMatches.length})${' '.repeat(14)}  │\n`;
+          classMatches.forEach(cls => {
+            diagram += `  │    • ${cls}${' '.repeat(Math.max(0, 20 - cls.length))}│\n`;
+          });
+        }
+        diagram += '  └──────────────────────────────┘\n';
+        diagram += '         │\n';
       }
       
       // Add methods if present
       if (methodMatches.length > 0) {
-        const methodId = String.fromCharCode(65 + nodes.length);
-        const methodLabel = methodMatches.length === 1 ? methodMatches[0] : `Methods (${methodMatches.length})`;
-        nodes.push({ id: methodId, label: methodLabel });
+        diagram += '  ┌──────────────────────────────┐\n';
+        if (methodMatches.length === 1) {
+          diagram += `  │  METHOD: ${methodMatches[0].padEnd(18)}  │\n`;
+        } else {
+          diagram += `  │  METHODS (${methodMatches.length})${' '.repeat(14)}  │\n`;
+          methodMatches.slice(0, 3).forEach(method => {
+            diagram += `  │    • ${method}${' '.repeat(Math.max(0, 20 - method.length))}│\n`;
+          });
+          if (methodMatches.length > 3) {
+            diagram += `  │    ... and ${methodMatches.length - 3} more        │\n`;
+          }
+        }
+        diagram += '  └──────────────────────────────┘\n';
+        diagram += '         │\n';
       }
       
       // Add conditionals
       if (ifMatches.length > 0) {
-        const condId = String.fromCharCode(65 + nodes.length);
-        nodes.push({ id: condId, label: `Logic (${ifMatches.length} conditions)` });
+        diagram += '  ┌──────────────────────────────┐\n';
+        diagram += `  │  LOGIC BRANCHES (${ifMatches.length})${' '.repeat(8)}  │\n`;
+        diagram += '  └──────────────────────────────┘\n';
+        diagram += '         │\n';
       }
       
       // Add loops
       if (loopMatches.length > 0) {
-        const loopId = String.fromCharCode(65 + nodes.length);
-        nodes.push({ id: loopId, label: `Iteration (${loopMatches.length})` });
+        diagram += '  ┌──────────────────────────────┐\n';
+        diagram += `  │  ITERATIONS (${loopMatches.length})${' '.repeat(12)}  │\n`;
+        diagram += '  └──────────────────────────────┘\n';
+        diagram += '         │\n';
       }
       
       // Add end point
-      nodes.push({ id: String.fromCharCode(65 + nodes.length), label: 'Complete' });
-      
-      // Generate node definitions
-      for (const node of nodes) {
-        diagram += `    ${node.id}["${node.label}"]\n`;
-      }
-      
-      // Generate connections
-      for (let i = 0; i < nodes.length - 1; i++) {
-        const currentId = String.fromCharCode(65 + i);
-        const nextId = String.fromCharCode(65 + i + 1);
-        diagram += `    ${currentId} --> ${nextId}\n`;
-      }
+      diagram += '  ┌──────────────┐\n';
+      diagram += '  │   COMPLETE   │\n';
+      diagram += '  └──────────────┘\n';
 
       res.json({ diagram: diagram.trim() });
     } catch (error) {
-      console.error('Error generating mermaid diagram:', error instanceof Error ? error.message : String(error));
-      // Return a simple fallback diagram on error
-      const fallback = `graph TD\n    A["Ruby Code"]\n    B["Processing"]\n    C["Complete"]\n    A --> B\n    B --> C`;
+      console.error('Error generating diagram:', error instanceof Error ? error.message : String(error));
+      const fallback = `┌─ CODE STRUCTURE ─┐
+│  ┌──────────────┐
+│  │    START     │
+│  └──────┬───────┘
+│         │
+│  ┌──────────────┐
+│  │ Ruby Code    │
+│  └──────┬───────┘
+│         │
+│  ┌──────────────┐
+│  │   COMPLETE   │
+│  └──────────────┘`;
       res.json({ diagram: fallback });
     }
   });
