@@ -60,6 +60,8 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
   const [mermaidDiagram, setMermaidDiagram] = useState<string>('');
   const [mermaidLoading, setMermaidLoading] = useState(false);
   const mermaidRef = useRef<HTMLDivElement>(null);
+  const [nanoExplanation, setNanoExplanation] = useState<string>('');
+  const [nanoLoading, setNanoLoading] = useState(false);
 
   useEffect(() => {
     if (rubyCode && rubyCode.trim()) {
@@ -114,6 +116,28 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
     }
   }, [mermaidDiagram]);
 
+  useEffect(() => {
+    if (rubyCode && rubyCode.trim()) {
+      setNanoLoading(true);
+      setNanoExplanation('');
+      
+      fetch('/api/nano-explain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: rubyCode })
+      })
+        .then(res => res.json())
+        .then(data => {
+          setNanoExplanation(data.explanation || '');
+          setNanoLoading(false);
+        })
+        .catch(error => {
+          console.error('Error fetching nano explanation:', error);
+          setNanoLoading(false);
+        });
+    }
+  }, [rubyCode]);
+
   const getStatusBadge = (status?: string) => {
     switch (status) {
       case 'success':
@@ -135,7 +159,7 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
     <div className="h-full bg-card border-l border-border">
       <Tabs defaultValue={rubyCode ? "analysis" : "overview"} className="h-full flex flex-col">
         <div className="border-b border-border px-4 py-3">
-          <TabsList className="grid w-full grid-cols-4 gap-1">
+          <TabsList className="grid w-full grid-cols-5 gap-1">
             {rubyCode && (
               <TabsTrigger value="analysis" className="text-xs" data-testid="tab-analysis">
                 <Activity className="w-3 h-3 mr-1" />
@@ -146,6 +170,12 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
               <Activity className="w-3 h-3 mr-1" />
               Overview
             </TabsTrigger>
+            {rubyCode && (
+              <TabsTrigger value="nano" className="text-xs" data-testid="tab-nano">
+                <Terminal className="w-3 h-3 mr-1" />
+                Explain
+              </TabsTrigger>
+            )}
             {rubyCode && (
               <TabsTrigger value="mermaid" className="text-xs" data-testid="tab-mermaid">
                 <BarChart3 className="w-3 h-3 mr-1" />
@@ -340,6 +370,34 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
               )}
             </ScrollArea>
           </TabsContent>
+
+          {rubyCode && (
+            <TabsContent value="nano" className="h-full m-0 p-4" data-testid="panel-nano">
+              <ScrollArea className="h-full">
+                {nanoLoading ? (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-center space-y-2 py-8">
+                        <div className="text-center space-y-2">
+                          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                          <p className="text-sm text-muted-foreground">Explaining code...</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : nanoExplanation ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm">Code Explanation</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{nanoExplanation}</p>
+                    </CardContent>
+                  </Card>
+                ) : null}
+              </ScrollArea>
+            </TabsContent>
+          )}
 
           {rubyCode && (
             <TabsContent value="mermaid" className="h-full m-0 p-4" data-testid="panel-mermaid">

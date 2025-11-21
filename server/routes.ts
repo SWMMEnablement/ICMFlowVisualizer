@@ -161,6 +161,50 @@ Keep the analysis concise but informative, written for a technical audience fami
     }
   });
 
+  app.post('/api/nano-explain', async (req, res) => {
+    try {
+      const { code } = req.body;
+      
+      if (!code || typeof code !== 'string') {
+        return res.status(400).json({ error: 'Invalid code provided' });
+      }
+
+      const ai = new GoogleGenAI({
+        apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY || "dummy",
+        httpOptions: {
+          apiVersion: "",
+          baseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL,
+        },
+      });
+
+      const prompt = `Explain this Ruby code using the Nano Banana Prompt framework. Structure your explanation as:
+
+1. **What it does**: High-level summary in 1-2 sentences
+2. **How it works**: Step-by-step walkthrough of the logic
+3. **Key components**: Important classes, methods, or patterns used
+4. **Why it matters**: Relevance to ICM InfoWorks context
+
+Keep explanations concise and technical. Use examples where helpful.
+
+RUBY CODE:
+\`\`\`ruby
+${code}
+\`\`\``;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+      });
+
+      const explanation = response.text || "Unable to generate explanation";
+
+      res.json({ explanation });
+    } catch (error) {
+      console.error('Error in nano explanation:', error instanceof Error ? error.message : String(error));
+      res.status(500).json({ error: 'Failed to generate explanation' });
+    }
+  });
+
   app.post('/api/mermaid-diagram', async (req, res) => {
     try {
       const { code } = req.body;
