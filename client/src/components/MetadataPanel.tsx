@@ -230,7 +230,7 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
                         <CardTitle className="text-sm">Code Overview</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{aiOverview}</p>
+                        <p className="text-sm text-primary font-bold leading-relaxed whitespace-pre-wrap">{aiOverview}</p>
                       </CardContent>
                     </Card>
                   ) : null}
