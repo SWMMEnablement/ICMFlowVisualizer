@@ -18,30 +18,37 @@ export function parseRubyFile(rubyCode: string): WorkflowDefinition {
   });
   previousNodeId = 'start';
   
-  const stepHeaders = rubyCode.match(/# ={5,}[\s\S]*?# (STEP \d+:.*?)[\s\n]# ={5,}/g) || [];
+  // Extract all method definitions from Ruby code
+  const methodMatches = rubyCode.matchAll(/def\s+(\w+)[^d]*?(?=\n\s*(?:def|end\s*$))/gm);
   
-  stepHeaders.forEach((stepBlock, index) => {
-    const titleMatch = stepBlock.match(/# STEP \d+:\s*(.*?)\n/);
-    const title = titleMatch ? titleMatch[1].trim() : `Step ${index + 1}`;
+  for (const match of methodMatches) {
+    const methodName = match[1];
+    const fullMethodText = match[0];
     
-    const methodMatch = stepBlock.match(/def\s+(\w+)/);
-    const methodName = methodMatch ? methodMatch[1] : null;
+    // Skip helper methods like initialize, private methods
+    if (methodName === 'initialize' || methodName.startsWith('_')) continue;
     
-    const codeMatch = stepBlock.match(/# ={5,}\n([\s\S]*?)(?:# ={5,}|$)/);
-    const codeSnippet = codeMatch ? codeMatch[1].trim() : stepBlock.trim();
+    // Skip common Ruby keywords
+    if (['new', 'class', 'module'].includes(methodName)) continue;
     
     nodeCount++;
     const nodeId = `step_${nodeCount}`;
+    
+    // Convert method name to readable title (e.g., parse_config -> Parse Config)
+    const title = methodName
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
     
     nodes.push({
       id: nodeId,
       type: 'process',
       label: title,
-      description: `Ruby code block for ${title}`,
+      description: `Method: ${methodName}`,
       position: { x: 300, y: 100 + nodeCount * 200 },
       metadata: {
-        methodName: methodName || undefined,
-        codeSnippet: codeSnippet.substring(0, 500)
+        methodName: methodName,
+        codeSnippet: fullMethodText.substring(0, 500)
       }
     });
     
@@ -54,7 +61,24 @@ export function parseRubyFile(rubyCode: string): WorkflowDefinition {
       });
     }
     previousNodeId = nodeId;
-  });
+  }
+  
+  // If no methods found, create a default process node
+  if (nodeCount === 0) {
+    nodeCount++;
+    const nodeId = `step_${nodeCount}`;
+    nodes.push({
+      id: nodeId,
+      type: 'process',
+      label: 'Process Ruby Code',
+      description: 'Ruby code processing',
+      position: { x: 300, y: 300 },
+      metadata: {
+        codeSnippet: rubyCode.substring(0, 500)
+      }
+    });
+    previousNodeId = nodeId;
+  }
   
   // Add end node
   nodes.push({
