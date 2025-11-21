@@ -197,12 +197,17 @@ export default function WorkflowVisualization() {
                       Hide Panel
                     </>
                   ) : (
-                <>
-                  <PanelRightOpen className="w-4 h-4 mr-2" />
-                  Show Panel
-                </>
-              )}
-            </Button>
+                    <>
+                      <PanelRightOpen className="w-4 h-4 mr-2" />
+                      Show Panel
+                    </>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                {isPanelOpen ? "Hide analysis panel" : "Show analysis panel"}
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
       </header>
