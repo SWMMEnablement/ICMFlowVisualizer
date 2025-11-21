@@ -213,62 +213,67 @@ ${code}
         return res.status(400).json({ error: 'Invalid code provided' });
       }
 
-      // Using Replit AI Integrations for Gemini access
-      const ai = new GoogleGenAI({
-        apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY || "dummy",
-        httpOptions: {
-          apiVersion: "",
-          baseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL,
-        },
-      });
+      // Extract code structure
+      const classMatches = Array.from(code.matchAll(/class\s+(\w+)/g)).map(m => m[1]);
+      const methodMatches = Array.from(code.matchAll(/def\s+(\w+)/g)).map(m => m[1]).filter(m => m !== 'initialize');
+      const ifMatches = code.match(/if\s+/g) || [];
+      const loopMatches = code.match(/\.each|while|until/g) || [];
 
-      const prompt = `Create a valid mermaid diagram for this Ruby code. Follow these rules EXACTLY:
-1. Use only basic flowchart syntax: graph TD, nodes with [text], and arrows -->
-2. Use only alphanumeric characters and underscores in node IDs
-3. No special characters like :, ;, !, ?, etc in node IDs
-4. Keep node labels short and simple
-5. Return ONLY the mermaid code, no markdown, no explanation
-
-Example format:
-graph TD
-    A["Start"]
-    B["Process"]
-    C["End"]
-    A --> B
-    B --> C
-
-RUBY CODE:
-\`\`\`ruby
-${code}
-\`\`\``;
-
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-      });
-
-      let diagram = response.text || "";
+      // Build a simple, valid mermaid diagram
+      let diagram = 'graph TD\n';
       
-      // Clean up the diagram - remove markdown code blocks if present
-      diagram = diagram.replace(/```mermaid\n?/g, '').replace(/```\n?/g, '').trim();
+      const nodes: { id: string; label: string }[] = [];
+      let nodeId = 0;
       
-      // Validate that it starts with graph or other valid mermaid keyword
-      if (!diagram.match(/^(graph|sequenceDiagram|pie|stateDiagram|classDiagram)/i)) {
-        // If not, try to extract valid diagram or return a simple fallback
-        if (!diagram.includes('-->') && !diagram.includes('graph')) {
-          // Generate a simple fallback diagram
-          const lines = code.split('\n').filter(l => l.trim());
-          const classCount = (code.match(/class\s+\w+/g) || []).length;
-          const methodCount = (code.match(/def\s+\w+/g) || []).length;
-          diagram = `graph TD\n    A["Ruby Code"]\n    B["Classes: ${classCount}"]\n    C["Methods: ${methodCount}"]\n    A --> B\n    A --> C`;
-        }
+      // Add entry point
+      nodes.push({ id: 'A', label: 'Start' });
+      
+      // Add classes if present
+      if (classMatches.length > 0) {
+        const classId = String.fromCharCode(65 + nodes.length);
+        const classLabel = classMatches.length === 1 ? classMatches[0] : `Classes (${classMatches.length})`;
+        nodes.push({ id: classId, label: classLabel });
+      }
+      
+      // Add methods if present
+      if (methodMatches.length > 0) {
+        const methodId = String.fromCharCode(65 + nodes.length);
+        const methodLabel = methodMatches.length === 1 ? methodMatches[0] : `Methods (${methodMatches.length})`;
+        nodes.push({ id: methodId, label: methodLabel });
+      }
+      
+      // Add conditionals
+      if (ifMatches.length > 0) {
+        const condId = String.fromCharCode(65 + nodes.length);
+        nodes.push({ id: condId, label: `Logic (${ifMatches.length} conditions)` });
+      }
+      
+      // Add loops
+      if (loopMatches.length > 0) {
+        const loopId = String.fromCharCode(65 + nodes.length);
+        nodes.push({ id: loopId, label: `Iteration (${loopMatches.length})` });
+      }
+      
+      // Add end point
+      nodes.push({ id: String.fromCharCode(65 + nodes.length), label: 'Complete' });
+      
+      // Generate node definitions
+      for (const node of nodes) {
+        diagram += `    ${node.id}["${node.label}"]\n`;
+      }
+      
+      // Generate connections
+      for (let i = 0; i < nodes.length - 1; i++) {
+        const currentId = String.fromCharCode(65 + i);
+        const nextId = String.fromCharCode(65 + i + 1);
+        diagram += `    ${currentId} --> ${nextId}\n`;
       }
 
       res.json({ diagram: diagram.trim() });
     } catch (error) {
       console.error('Error generating mermaid diagram:', error instanceof Error ? error.message : String(error));
       // Return a simple fallback diagram on error
-      const fallback = `graph TD\n    A["Code Analysis"]\n    B["Unable to generate diagram"]\n    C["See Analysis tab for details"]\n    A --> B\n    B --> C`;
+      const fallback = `graph TD\n    A["Ruby Code"]\n    B["Processing"]\n    C["Complete"]\n    A --> B\n    B --> C`;
       res.json({ diagram: fallback });
     }
   });
