@@ -88,10 +88,38 @@ export function ReferenceModal({ open, onOpenChange }: ReferenceModalProps) {
                 <p className="text-muted-foreground">Loading...</p>
               </div>
             ) : (
-              <div className="prose prose-sm dark:prose-invert max-w-none">
-                <pre className="whitespace-pre-wrap break-words text-xs font-mono text-foreground">
-                  {content}
-                </pre>
+              <div className="text-sm text-foreground leading-relaxed space-y-4 pr-4">
+                {content.split('\n').map((line, idx) => {
+                  // Headers
+                  if (line.startsWith('# ')) {
+                    return <h2 key={idx} className="text-lg font-bold mt-4 mb-2">{line.slice(2)}</h2>;
+                  }
+                  if (line.startsWith('## ')) {
+                    return <h3 key={idx} className="text-base font-semibold mt-3 mb-2">{line.slice(3)}</h3>;
+                  }
+                  if (line.startsWith('### ')) {
+                    return <h4 key={idx} className="text-sm font-semibold mt-2 mb-1">{line.slice(4)}</h4>;
+                  }
+                  // Bold text
+                  if (line.startsWith('- **')) {
+                    const parts = line.split('**');
+                    return <p key={idx} className="text-xs ml-4">• <span className="font-semibold">{parts[1]}</span> {parts.slice(2).join('**')}</p>;
+                  }
+                  // List items
+                  if (line.startsWith('- ')) {
+                    return <p key={idx} className="text-xs ml-4">• {line.slice(2)}</p>;
+                  }
+                  // Code blocks
+                  if (line.startsWith('```')) {
+                    return null;
+                  }
+                  // Empty lines
+                  if (line.trim() === '') {
+                    return <div key={idx} className="h-1" />;
+                  }
+                  // Regular text
+                  return <p key={idx} className="text-xs">{line}</p>;
+                })}
               </div>
             )}
           </ScrollArea>
