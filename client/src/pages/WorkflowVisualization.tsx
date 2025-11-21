@@ -186,7 +186,7 @@ export default function WorkflowVisualization() {
       <ReferenceModal open={isReferenceOpen} onOpenChange={setIsReferenceOpen} />
 
       <div className="flex-1 flex overflow-hidden">
-        <div className="w-[420px] flex-shrink-0 border-r border-border flex flex-col bg-card">
+        <div className="w-[525px] flex-shrink-0 border-r border-border flex flex-col bg-card">
           <div className="px-4 py-3 border-b border-border">
             <h3 className="font-semibold text-sm">Ruby Code</h3>
             {fileName && <p className="text-xs text-muted-foreground mt-1">{fileName}</p>}
