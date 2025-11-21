@@ -224,6 +224,8 @@ export default function WorkflowVisualization() {
           <div className="flex-1 min-w-0">
             <MetadataPanel
               selectedNode={selectedNode}
+              rubyCode={rubyCode}
+              fileName={fileName}
               fileConfigs={workflowData.fileConfigs}
               statistics={workflowData.statistics}
               logs={logs}

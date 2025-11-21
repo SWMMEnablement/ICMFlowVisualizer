@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 
 interface MetadataPanelProps {
   selectedNode?: WorkflowNode;
+  rubyCode?: string;
+  fileName?: string;
   fileConfigs?: FileConfig[];
   statistics?: ImportStatistics;
   logs?: LogEntry[];
@@ -15,7 +17,42 @@ interface MetadataPanelProps {
   logsError?: Error | null;
 }
 
-export function MetadataPanel({ selectedNode, fileConfigs = [], statistics, logs = [], logsLoading, logsError }: MetadataPanelProps) {
+function analyzeRubyCode(code: string): { methods: string[]; classes: string[]; summary: string } {
+  const methods: string[] = [];
+  const classes: string[] = [];
+  
+  // Find all method definitions
+  const methodMatches = code.matchAll(/^\s*def\s+(\w+)/gm);
+  for (const match of methodMatches) {
+    const methodName = match[1];
+    if (methodName !== 'initialize' && !methodName.startsWith('_')) {
+      methods.push(methodName);
+    }
+  }
+  
+  // Find all class definitions
+  const classMatches = code.matchAll(/^\s*class\s+(\w+)/gm);
+  for (const match of classMatches) {
+    classes.push(match[1]);
+  }
+  
+  // Generate summary
+  let summary = 'This Ruby script ';
+  
+  if (classes.length > 0) {
+    summary += `defines ${classes.length} class${classes.length > 1 ? 'es' : ''} (${classes.join(', ')}) and `;
+  }
+  
+  if (methods.length > 0) {
+    summary += `contains ${methods.length} method${methods.length > 1 ? 's' : ''} that handle various operations.`;
+  } else {
+    summary += 'processes Ruby code logic.';
+  }
+  
+  return { methods, classes, summary };
+}
+
+export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', fileConfigs = [], statistics, logs = [], logsLoading, logsError }: MetadataPanelProps) {
   const getStatusBadge = (status?: string) => {
     switch (status) {
       case 'success':
@@ -31,11 +68,19 @@ export function MetadataPanel({ selectedNode, fileConfigs = [], statistics, logs
     }
   };
 
+  const analysis = rubyCode ? analyzeRubyCode(rubyCode) : null;
+
   return (
     <div className="h-full bg-card border-l border-border">
-      <Tabs defaultValue="overview" className="h-full flex flex-col">
+      <Tabs defaultValue={rubyCode ? "analysis" : "overview"} className="h-full flex flex-col">
         <div className="border-b border-border px-4 py-3">
           <TabsList className="grid w-full grid-cols-4 gap-1">
+            {rubyCode && (
+              <TabsTrigger value="analysis" className="text-xs" data-testid="tab-analysis">
+                <Activity className="w-3 h-3 mr-1" />
+                Analysis
+              </TabsTrigger>
+            )}
             <TabsTrigger value="overview" className="text-xs" data-testid="tab-overview">
               <Activity className="w-3 h-3 mr-1" />
               Overview
@@ -48,14 +93,99 @@ export function MetadataPanel({ selectedNode, fileConfigs = [], statistics, logs
               <BarChart3 className="w-3 h-3 mr-1" />
               Stats
             </TabsTrigger>
-            <TabsTrigger value="logs" className="text-xs" data-testid="tab-logs">
-              <Terminal className="w-3 h-3 mr-1" />
-              Logs
-            </TabsTrigger>
+            {!rubyCode && (
+              <TabsTrigger value="logs" className="text-xs" data-testid="tab-logs">
+                <Terminal className="w-3 h-3 mr-1" />
+                Logs
+              </TabsTrigger>
+            )}
           </TabsList>
         </div>
 
         <div className="flex-1 overflow-hidden">
+          {rubyCode && analysis && (
+            <TabsContent value="analysis" className="h-full m-0 p-4" data-testid="panel-analysis">
+              <ScrollArea className="h-full">
+                <div className="space-y-4 pr-4">
+                  {fileName && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          <FileText className="w-4 h-4" />
+                          File
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-xs font-mono text-foreground">{fileName}</p>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm">Summary</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{analysis.summary}</p>
+                    </CardContent>
+                  </Card>
+
+                  {analysis.classes.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          <Terminal className="w-4 h-4" />
+                          Classes Defined
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          {analysis.classes.map((cls) => (
+                            <div key={cls} className="bg-muted/30 rounded px-3 py-2 font-mono text-xs text-foreground">
+                              {cls}
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {analysis.methods.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          <Terminal className="w-4 h-4" />
+                          Methods ({analysis.methods.length})
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          {analysis.methods.map((method) => (
+                            <div key={method} className="bg-muted/30 rounded px-3 py-2 font-mono text-xs text-foreground">
+                              {method}
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm">Key Details</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-xs text-muted-foreground space-y-2">
+                      <p>• <span className="font-semibold text-foreground">{analysis.methods.length}</span> method{analysis.methods.length !== 1 ? 's' : ''} defined</p>
+                      <p>• <span className="font-semibold text-foreground">{analysis.classes.length}</span> class{analysis.classes.length !== 1 ? 'es' : ''} defined</p>
+                      <p>• Script total size: <span className="font-semibold text-foreground">{rubyCode.length}</span> characters</p>
+                      <p>• Lines of code: <span className="font-semibold text-foreground">{rubyCode.split('\n').length}</span></p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </ScrollArea>
+            </TabsContent>
+          )}
+
           <TabsContent value="overview" className="h-full m-0 p-4" data-testid="panel-overview">
             <ScrollArea className="h-full">
               {selectedNode ? (
@@ -116,8 +246,9 @@ export function MetadataPanel({ selectedNode, fileConfigs = [], statistics, logs
                   )}
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                  Select a workflow node to view details
+                <div className="text-center text-muted-foreground text-sm space-y-2">
+                  <p>No workflow node selected</p>
+                  {!rubyCode && <p className="text-xs">Upload a Ruby file to get started</p>}
                 </div>
               )}
             </ScrollArea>
