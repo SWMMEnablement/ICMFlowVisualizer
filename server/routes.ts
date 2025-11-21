@@ -178,12 +178,20 @@ Keep the analysis concise but informative, written for a technical audience fami
         },
       });
 
-      const prompt = `You are an expert at creating mermaid diagrams to visualize code structure. Analyze the following Ruby code and generate a mermaid diagram that shows:
-- Classes and their relationships
-- Major methods and their flow
-- Key data structures and dependencies
+      const prompt = `Create a valid mermaid diagram for this Ruby code. Follow these rules EXACTLY:
+1. Use only basic flowchart syntax: graph TD, nodes with [text], and arrows -->
+2. Use only alphanumeric characters and underscores in node IDs
+3. No special characters like :, ;, !, ?, etc in node IDs
+4. Keep node labels short and simple
+5. Return ONLY the mermaid code, no markdown, no explanation
 
-Return ONLY the mermaid diagram code (starting with \`graph TD\` or similar), wrapped in \`\`\`mermaid\`\`\` tags. No other text.
+Example format:
+graph TD
+    A["Start"]
+    B["Process"]
+    C["End"]
+    A --> B
+    B --> C
 
 RUBY CODE:
 \`\`\`ruby
@@ -197,17 +205,27 @@ ${code}
 
       let diagram = response.text || "";
       
-      // Extract mermaid code from markdown if wrapped in code blocks
-      if (diagram.includes('```mermaid')) {
-        diagram = diagram.match(/```mermaid\n([\s\S]*?)\n```/)?.[1] || diagram;
-      } else if (diagram.includes('```')) {
-        diagram = diagram.match(/```\n?([\s\S]*?)\n?```/)?.[1] || diagram;
+      // Clean up the diagram - remove markdown code blocks if present
+      diagram = diagram.replace(/```mermaid\n?/g, '').replace(/```\n?/g, '').trim();
+      
+      // Validate that it starts with graph or other valid mermaid keyword
+      if (!diagram.match(/^(graph|sequenceDiagram|pie|stateDiagram|classDiagram)/i)) {
+        // If not, try to extract valid diagram or return a simple fallback
+        if (!diagram.includes('-->') && !diagram.includes('graph')) {
+          // Generate a simple fallback diagram
+          const lines = code.split('\n').filter(l => l.trim());
+          const classCount = (code.match(/class\s+\w+/g) || []).length;
+          const methodCount = (code.match(/def\s+\w+/g) || []).length;
+          diagram = `graph TD\n    A["Ruby Code"]\n    B["Classes: ${classCount}"]\n    C["Methods: ${methodCount}"]\n    A --> B\n    A --> C`;
+        }
       }
 
       res.json({ diagram: diagram.trim() });
     } catch (error) {
       console.error('Error generating mermaid diagram:', error instanceof Error ? error.message : String(error));
-      res.status(500).json({ error: 'Failed to generate diagram' });
+      // Return a simple fallback diagram on error
+      const fallback = `graph TD\n    A["Code Analysis"]\n    B["Unable to generate diagram"]\n    C["See Analysis tab for details"]\n    A --> B\n    B --> C`;
+      res.json({ diagram: fallback });
     }
   });
 
