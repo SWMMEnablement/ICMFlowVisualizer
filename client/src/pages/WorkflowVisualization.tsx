@@ -28,7 +28,8 @@ export default function WorkflowVisualization() {
   const [rubyCode, setRubyCode] = useState<string>('');
   const [fileName, setFileName] = useState<string>('');
   const [fileType, setFileType] = useState<'rb' | 'inp' | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const rubyFileInputRef = useRef<HTMLInputElement | null>(null);
+  const inpFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: workflowData, isLoading, error } = useQuery<WorkflowDefinition>({
     queryKey: ['/api/workflow'],
@@ -127,12 +128,20 @@ export default function WorkflowVisualization() {
               </h1>
             </div>
             <input
-              ref={fileInputRef}
+              ref={rubyFileInputRef}
               type="file"
-              accept=".rb,.inp"
+              accept=".rb"
               onChange={handleFileChange}
               className="hidden"
               data-testid="input-ruby-file-header"
+            />
+            <input
+              ref={inpFileInputRef}
+              type="file"
+              accept=".inp"
+              onChange={handleFileChange}
+              className="hidden"
+              data-testid="input-inp-file-header"
             />
             <Tooltip>
               <TooltipTrigger asChild>
@@ -140,16 +149,34 @@ export default function WorkflowVisualization() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    fileInputRef.current?.click();
+                    rubyFileInputRef.current?.click();
                   }}
-                  data-testid="button-file-picker"
+                  data-testid="button-open-rb"
                 >
                   <Upload className="w-4 h-4 mr-2" />
-                  <span className="text-xs">Open File</span>
+                  <span className="text-xs">Open .rb</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                Upload a Ruby script (.rb) or SWMM5 input file (.inp) to analyze
+                Upload a Ruby script file (.rb) to analyze
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    inpFileInputRef.current?.click();
+                  }}
+                  data-testid="button-open-inp"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  <span className="text-xs">Open .inp</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                Upload a SWMM5 input file (.inp) to analyze
               </TooltipContent>
             </Tooltip>
           </div>
