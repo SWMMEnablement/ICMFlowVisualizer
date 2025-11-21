@@ -101,7 +101,7 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
     <div className="h-full bg-card border-l border-border">
       <Tabs defaultValue={rubyCode ? "analysis" : "overview"} className="h-full flex flex-col">
         <div className="border-b border-border px-4 py-3">
-          <TabsList className="grid w-full grid-cols-4 gap-1">
+          <TabsList className="grid w-full grid-cols-3 gap-1">
             {rubyCode && (
               <TabsTrigger value="analysis" className="text-xs" data-testid="tab-analysis">
                 <Activity className="w-3 h-3 mr-1" />
@@ -111,10 +111,6 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
             <TabsTrigger value="overview" className="text-xs" data-testid="tab-overview">
               <Activity className="w-3 h-3 mr-1" />
               Overview
-            </TabsTrigger>
-            <TabsTrigger value="files" className="text-xs" data-testid="tab-files">
-              <FileText className="w-3 h-3 mr-1" />
-              Files
             </TabsTrigger>
             <TabsTrigger value="statistics" className="text-xs" data-testid="tab-statistics">
               <BarChart3 className="w-3 h-3 mr-1" />
@@ -300,45 +296,6 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
                 <div className="text-center text-muted-foreground text-sm space-y-2">
                   <p>No workflow node selected</p>
                   {!rubyCode && <p className="text-xs">Upload a Ruby file to get started</p>}
-                </div>
-              )}
-            </ScrollArea>
-          </TabsContent>
-
-          <TabsContent value="files" className="h-full m-0 p-4" data-testid="panel-files">
-            <ScrollArea className="h-full">
-              {fileConfigs.length > 0 ? (
-                <div className="space-y-3">
-                  {fileConfigs.map((file) => (
-                    <Card key={file.id} data-testid={`file-card-${file.id}`}>
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <CardTitle className="text-sm font-mono truncate">{file.fileName}</CardTitle>
-                          {file.status && getStatusBadge(file.status)}
-                        </div>
-                      </CardHeader>
-                      <CardContent className="text-xs space-y-2">
-                        <div>
-                          <span className="text-muted-foreground">Model Group:</span>
-                          <p className="font-medium mt-1">{file.modelGroupName}</p>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Path:</span>
-                          <p className="font-mono text-xs mt-1 break-all">{file.filePath}</p>
-                        </div>
-                        {file.fileSize && (
-                          <div>
-                            <span className="text-muted-foreground">Size:</span>
-                            <p className="font-mono mt-1">{(file.fileSize / 1024).toFixed(2)} KB</p>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                  No files configured
                 </div>
               )}
             </ScrollArea>
