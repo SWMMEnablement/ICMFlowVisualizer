@@ -84,8 +84,20 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
   const [mermaidDiagram, setMermaidDiagram] = useState<string>('');
   const [nanoExplanation, setNanoExplanation] = useState<string>('');
   const [nanoLoading, setNanoLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<string>(rubyCode ? 'analysis' : 'overview');
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    if (fileType === 'rb' && rubyCode) return 'analysis';
+    if (fileType === 'inp' && rubyCode) return 'statistics';
+    return 'overview';
+  });
   const [isCopied, setIsCopied] = useState(false);
+
+  useEffect(() => {
+    if (fileType === 'rb' && rubyCode && activeTab === 'statistics') {
+      setActiveTab('analysis');
+    } else if (fileType === 'inp' && rubyCode && (activeTab === 'analysis' || activeTab === 'overview')) {
+      setActiveTab('statistics');
+    }
+  }, [fileType, rubyCode]);
 
   useEffect(() => {
     if (rubyCode && rubyCode.trim()) {
