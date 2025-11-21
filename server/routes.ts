@@ -187,7 +187,29 @@ Keep the analysis concise but informative, written for a technical audience fami
 3. **Element breakdown**: Summary of elements (${elementCount} total) and their distribution across sections
 4. **Configuration purpose**: What this SWMM5 setup is designed to model or simulate
 
-Keep explanations concise and technical. Focus on the configuration's structure and purpose.
+Apply these additional analytical rules:
+
+**Model Complexity Classification**: 
+- Screening Grade: Simple networks with <50 nodes and <50 subcatchments
+- Master Plan Grade: Moderate networks with 50-300 nodes/subcatchments, LID present, dual drainage optional
+- Research Grade: Complex networks >300 nodes/subcatchments, advanced LID implementation, dual drainage active, sophisticated control logic
+
+**Dual Drainage Detection**: 
+- Check for presence of dual drainage physics by identifying dual drainage inlets, streets, and specialized storage units
+- Note if Dual_Drainage_Streets > 0 or equivalent indicators are present
+
+**Green Infrastructure Assessment ("Greenness")**:
+- Identify Low Impact Development (LID) usage including bioretention cells, permeable pavements, green roofs, rain gardens
+- Assess the proportion of subcatchments with LID controls vs. traditional drainage
+- Indicate sustainability focus level based on LID prevalence
+
+**Visual Network Characterization**:
+- Describe the network topology (dendritic, tree-like, looped, or complex interconnected)
+- Note presence of critical infrastructure (pumps, storage, treatment units)
+- Identify major flow paths and control mechanisms
+- Suggest a visual metaphor suitable for a dashboard thumbnail representation
+
+Keep explanations concise and technical. Focus on the configuration's structure, complexity, sustainability features, and operational characteristics.
 
 SWMM5 FILE:
 \`\`\`ini
