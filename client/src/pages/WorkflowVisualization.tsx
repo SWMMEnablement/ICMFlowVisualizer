@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { type WorkflowNode, type WorkflowDefinition, type LogEntry } from "@shared/schema";
 import { MetadataPanel } from "@/components/MetadataPanel";
-import { LegendPanel } from "@/components/LegendPanel";
 import { OnboardingDialog } from "@/components/OnboardingDialog";
 import { AIAssistant } from "@/components/AIAssistant";
 import { WorkflowCanvas } from "@/components/WorkflowCanvas";
@@ -11,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Info, PanelRightClose, PanelRightOpen, Upload, FileText, BookOpen } from "lucide-react";
+import { PanelRightClose, PanelRightOpen, Upload, FileText, BookOpen } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 
@@ -20,7 +19,6 @@ type PhaseFilter = 'all';
 export default function WorkflowVisualization() {
   const [selectedNode, setSelectedNode] = useState<WorkflowNode | undefined>();
   const [isPanelOpen, setIsPanelOpen] = useState(true);
-  const [isLegendOpen, setIsLegendOpen] = useState(false);
   const [isMarkdownOpen, setIsMarkdownOpen] = useState(false);
   const [isReferenceOpen, setIsReferenceOpen] = useState(false);
   const [phaseFilter] = useState<PhaseFilter>('all');
@@ -152,17 +150,6 @@ export default function WorkflowVisualization() {
               </SheetTrigger>
               <SheetContent side="right" className="w-[500px] sm:w-[640px]">
                 <MarkdownEditor />
-              </SheetContent>
-            </Sheet>
-            <Sheet open={isLegendOpen} onOpenChange={setIsLegendOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="sm" data-testid="button-legend">
-                  <Info className="w-4 h-4 mr-2" />
-                  Legend
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[400px] sm:w-[540px]">
-                <LegendPanel />
               </SheetContent>
             </Sheet>
             <Button
