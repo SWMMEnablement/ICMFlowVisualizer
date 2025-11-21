@@ -71,7 +71,7 @@ export function AIAssistant({ selectedNode }: AIAssistantProps) {
           AI Assistant
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-full max-w-2xl h-[600px] flex flex-col" data-testid="dialog-ai-assistant">
+      <DialogContent className="w-full max-w-lg h-[400px] flex flex-col" data-testid="dialog-ai-assistant">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
