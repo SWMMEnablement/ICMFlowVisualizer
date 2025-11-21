@@ -217,18 +217,9 @@ export default function WorkflowVisualization() {
         </div>
       </header>
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 flex overflow-hidden">
-          <WorkflowCanvas
-            nodes={filteredNodes}
-            edges={filteredEdges}
-            onNodeSelect={setSelectedNode}
-            selectedNodeId={selectedNode?.id}
-          />
-        </div>
-        
+      <div className="flex-1 flex overflow-hidden">
         {isStepListOpen && (
-          <div className="w-[420px] flex-shrink-0">
+          <div className="w-[420px] flex-shrink-0 border-r border-border">
             {isParsingFile ? (
               <div className="h-full bg-card border-r border-border flex items-center justify-center">
                 <div className="text-center space-y-3">
