@@ -224,21 +224,21 @@ ${code}
       const fileOpsMatches = code.match(/File\.|Dir\.|\.write|\.read|\.open/g) || [];
       const apiCallsMatches = Array.from(code.matchAll(/WSApplication\.|\.open|\.result|\.row_objects|model_object/g));
 
-      // Build detailed ASCII diagram
+      // Build detailed ASCII diagram with uniform formatting
       let diagram = '╔═══════════════════════════════════════════════════════════╗\n';
       diagram += '║           RUBY CODE STRUCTURE ANALYSIS                     ║\n';
       diagram += '╚═══════════════════════════════════════════════════════════╝\n\n';
 
       // Starting point
-      diagram += '  ┏━━━━━━━━━━━━━━━━━━━━━━━┓\n';
-      diagram += '  ┃     SCRIPT START      ┃\n';
-      diagram += '  ┗━━━━━━━━━━━━━━━━━━━━━━━┛\n';
+      diagram += '  ┌─────────────────────────────────┐\n';
+      diagram += '  │     SCRIPT START                │\n';
+      diagram += '  └─────────────────────────────────┘\n';
       diagram += '           ↓\n';
 
       // API/Database interactions
       if (apiCallsMatches.length > 0) {
         diagram += '  ┌─────────────────────────────────┐\n';
-        diagram += '  │  INFWORKS ICM API CALLS (${apiCallsMatches.length})     │\n';
+        diagram += '  │  INFWORKS ICM API CALLS         │\n';
         diagram += '  │  • WSApplication.open()         │\n';
         diagram += '  │  • model_object()               │\n';
         diagram += '  │  • row_objects()                │\n';
@@ -249,44 +249,44 @@ ${code}
 
       // Classes
       if (classMatches.length > 0) {
-        diagram += '  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n';
-        diagram += `  ┃  CLASSES DEFINED (${classMatches.length.toString().padEnd(2)})         ┃\n`;
+        diagram += '  ┌─────────────────────────────────┐\n';
+        diagram += `  │  CLASSES DEFINED (${classMatches.length})${' '.repeat(Math.max(0, 18 - classMatches.length.toString().length))}        │\n`;
         classMatches.forEach(cls => {
-          const paddedName = cls.padEnd(25);
-          diagram += `  ┃    • ${paddedName}  ┃\n`;
+          const paddedName = cls.padEnd(27);
+          diagram += `  │    • ${paddedName}│\n`;
         });
-        diagram += '  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n';
+        diagram += '  └─────────────────────────────────┘\n';
         diagram += '           ↓\n';
       }
 
       // Methods/Functions
       if (methodMatches.length > 0) {
         diagram += '  ┌─────────────────────────────────┐\n';
-        diagram += `  │  METHODS DEFINED (${methodMatches.length.toString().padEnd(2)})       │\n`;
+        diagram += `  │  METHODS DEFINED (${methodMatches.length})${' '.repeat(Math.max(0, 18 - methodMatches.length.toString().length))}         │\n`;
         methodMatches.slice(0, 5).forEach(method => {
-          const paddedName = method.padEnd(25);
-          diagram += `  │    • ${paddedName}  │\n`;
+          const paddedName = method.padEnd(27);
+          diagram += `  │    • ${paddedName}│\n`;
         });
         if (methodMatches.length > 5) {
-          diagram += `  │    ... and ${(methodMatches.length - 5)} more methods        │\n`;
+          diagram += `  │    ... and ${(methodMatches.length - 5)} more${' '.repeat(Math.max(0, 17 - (methodMatches.length - 5).toString().length))}│\n`;
         }
         diagram += '  └─────────────────────────────────┘\n';
         diagram += '           ↓\n';
       }
 
       // Data Processing
-      diagram += '  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n';
-      diagram += '  ┃  DATA PROCESSING               ┃\n';
+      diagram += '  ┌─────────────────────────────────┐\n';
+      diagram += '  │  DATA PROCESSING                │\n';
       if (arrayMatches.length > 0) {
-        diagram += `  ┃  • Array operations (${arrayMatches.length})         ┃\n`;
+        diagram += `  │  • Array operations (${arrayMatches.length})${' '.repeat(Math.max(0, 11 - arrayMatches.length.toString().length))}       │\n`;
       }
       if (hashMatches.length > 0) {
-        diagram += `  ┃  • Hash/Map structures (${hashMatches.length})     ┃\n`;
+        diagram += `  │  • Hash/Map structures (${hashMatches.length})${' '.repeat(Math.max(0, 7 - hashMatches.length.toString().length))}   │\n`;
       }
       if (callMatches.length > 0) {
-        diagram += `  ┃  • Custom calls (${callMatches.length})             ┃\n`;
+        diagram += `  │  • Custom calls (${callMatches.length})${' '.repeat(Math.max(0, 13 - callMatches.length.toString().length))}         │\n`;
       }
-      diagram += '  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n';
+      diagram += '  └─────────────────────────────────┘\n';
       diagram += '           ↓\n';
 
       // Control Flow
@@ -294,10 +294,10 @@ ${code}
         diagram += '  ┌─────────────────────────────────┐\n';
         diagram += '  │  CONTROL FLOW                   │\n';
         if (ifMatches.length > 0) {
-          diagram += `  │  • Conditionals: ${ifMatches.length.toString().padEnd(2)}                 │\n`;
+          diagram += `  │  • Conditionals: ${ifMatches.length}${' '.repeat(Math.max(0, 20 - ifMatches.length.toString().length))}│\n`;
         }
         if (loopMatches.length > 0) {
-          diagram += `  │  • Iterations: ${loopMatches.length.toString().padEnd(2)}                   │\n`;
+          diagram += `  │  • Iterations: ${loopMatches.length}${' '.repeat(Math.max(0, 22 - loopMatches.length.toString().length))}│\n`;
         }
         diagram += '  └─────────────────────────────────┘\n';
         diagram += '           ↓\n';
@@ -305,12 +305,12 @@ ${code}
 
       // File Operations
       if (fileOpsMatches.length > 0) {
-        diagram += '  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n';
-        diagram += `  ┃  FILE I/O OPERATIONS (${fileOpsMatches.length})        ┃\n`;
-        diagram += '  ┃  • File.write()                 ┃\n';
-        diagram += '  ┃  • Dir.mkdir()                  ┃\n';
-        diagram += '  ┃  • Output generation            ┃\n';
-        diagram += '  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n';
+        diagram += '  ┌─────────────────────────────────┐\n';
+        diagram += `  │  FILE I/O OPERATIONS (${fileOpsMatches.length})${' '.repeat(Math.max(0, 10 - fileOpsMatches.length.toString().length))}     │\n`;
+        diagram += '  │  • File.write()                 │\n';
+        diagram += '  │  • Dir.mkdir()                  │\n';
+        diagram += '  │  • Output generation            │\n';
+        diagram += '  └─────────────────────────────────┘\n';
         diagram += '           ↓\n';
       }
 
@@ -319,25 +319,24 @@ ${code}
       if (errorHandling.length > 0) {
         diagram += '  ┌─────────────────────────────────┐\n';
         diagram += '  │  ERROR HANDLING                 │\n';
-        diagram += `  │  • Exception blocks (${(errorHandling.length / 2).toFixed(0).padEnd(2)})       │\n`;
+        diagram += `  │  • Exception blocks (${(errorHandling.length / 2).toFixed(0)})${' '.repeat(Math.max(0, 17 - (errorHandling.length / 2).toFixed(0).toString().length))}   │\n`;
         diagram += '  │  • Graceful failure management  │\n';
         diagram += '  └─────────────────────────────────┘\n';
         diagram += '           ↓\n';
       }
 
       // Summary stats
-      diagram += '  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n';
-      diagram += '  ┃  CODE STATISTICS               ┃\n';
-      diagram += `  ┃  Methods: ${methodMatches.length.toString().padEnd(2)}  Classes: ${classMatches.length.toString().padEnd(2)}  Loops: ${loopMatches.length.toString().padEnd(2)}        ┃\n`;
-      diagram += `  ┃  Conditions: ${ifMatches.length.toString().padEnd(2)}  API Calls: ${apiCallsMatches.length.toString().padEnd(2)}      ┃\n`;
-      diagram += '  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n';
+      diagram += '  ┌─────────────────────────────────┐\n';
+      diagram += '  │  CODE STATISTICS                │\n';
+      diagram += `  │  Methods: ${methodMatches.length}  Classes: ${classMatches.length}  Loops: ${loopMatches.length}${' '.repeat(Math.max(0, 15 - methodMatches.length.toString().length - classMatches.length.toString().length - loopMatches.length.toString().length))}       │\n`;
+      diagram += `  │  Conditions: ${ifMatches.length}  API Calls: ${apiCallsMatches.length}${' '.repeat(Math.max(0, 10 - ifMatches.length.toString().length - apiCallsMatches.length.toString().length))}  │\n`;
+      diagram += '  └─────────────────────────────────┘\n';
       diagram += '           ↓\n';
 
       // End
-      diagram += '  ┏━━━━━━━━━━━━━━━━━━━━━━━┓\n';
-      diagram += '  ┃      EXECUTION       ┃\n';
-      diagram += '  ┃       COMPLETE       ┃\n';
-      diagram += '  ┗━━━━━━━━━━━━━━━━━━━━━━━┛\n';
+      diagram += '  ┌─────────────────────────────────┐\n';
+      diagram += '  │      EXECUTION COMPLETE         │\n';
+      diagram += '  └─────────────────────────────────┘\n';
 
       res.json({ diagram: diagram.trim() });
     } catch (error) {
