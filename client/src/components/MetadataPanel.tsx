@@ -204,6 +204,7 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
 
   const analysis = fileType === 'rb' && rubyCode ? analyzeRubyCode(rubyCode) : null;
   const swmm5Data = fileType === 'inp' && rubyCode ? parseSWMM5File(rubyCode) : null;
+  const elementCount = swmm5Data ? Array.from(swmm5Data.elements.values()).reduce((sum, count) => sum + count, 0) : 0;
 
   const getContentToCopy = (): string => {
     switch (activeTab) {
@@ -414,6 +415,17 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
             <ScrollArea className="h-full">
               {rubyCode ? (
                 <div className="space-y-4 pr-4">
+                  {fileType === 'inp' && swmm5Data && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm">File Summary</CardTitle>
+                      </CardHeader>
+                      <CardContent className="text-xs text-muted-foreground space-y-2">
+                        <p>• <span className="font-semibold text-foreground">{swmm5Data.sections.length}</span> section{swmm5Data.sections.length !== 1 ? 's' : ''}</p>
+                        <p>• <span className="font-semibold text-foreground">{elementCount}</span> total element{elementCount !== 1 ? 's' : ''}</p>
+                      </CardContent>
+                    </Card>
+                  )}
                   {aiLoading ? (
                     <Card>
                       <CardContent className="pt-6">
@@ -512,7 +524,7 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
           </TabsContent>
           )}
 
-          {rubyCode && (
+          {rubyCode && fileType === 'rb' && (
             <TabsContent value="nano" className="h-full m-0 p-4" data-testid="panel-nano">
               <ScrollArea className="h-full">
                 {nanoLoading ? (
