@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileText, Activity, BarChart3, Terminal, CheckCircle2, XCircle, AlertTriangle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
 
 interface MetadataPanelProps {
   selectedNode?: WorkflowNode;
@@ -53,6 +54,32 @@ function analyzeRubyCode(code: string): { methods: string[]; classes: string[]; 
 }
 
 export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', fileConfigs = [], statistics, logs = [], logsLoading, logsError }: MetadataPanelProps) {
+  const [aiOverview, setAiOverview] = useState<string>('');
+  const [aiLoading, setAiLoading] = useState(false);
+
+  useEffect(() => {
+    if (rubyCode && rubyCode.trim()) {
+      setAiLoading(true);
+      setAiOverview('');
+      
+      // Call the AI endpoint to get detailed overview
+      fetch('/api/ai-analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: rubyCode, context: 'detailed overview' })
+      })
+        .then(res => res.json())
+        .then(data => {
+          setAiOverview(data.analysis || '');
+          setAiLoading(false);
+        })
+        .catch(error => {
+          console.error('Error fetching AI analysis:', error);
+          setAiLoading(false);
+        });
+    }
+  }, [rubyCode]);
+
   const getStatusBadge = (status?: string) => {
     switch (status) {
       case 'success':
@@ -188,7 +215,31 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
 
           <TabsContent value="overview" className="h-full m-0 p-4" data-testid="panel-overview">
             <ScrollArea className="h-full">
-              {selectedNode ? (
+              {rubyCode ? (
+                <div className="space-y-4 pr-4">
+                  {aiLoading ? (
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="flex items-center justify-center space-y-2 py-8">
+                          <div className="text-center space-y-2">
+                            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                            <p className="text-sm text-muted-foreground">Analyzing code with AI...</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : aiOverview ? (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm">Code Overview</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{aiOverview}</p>
+                      </CardContent>
+                    </Card>
+                  ) : null}
+                </div>
+              ) : selectedNode ? (
                 <div className="space-y-4">
                   <div>
                     <h3 className="font-serif font-semibold text-lg mb-2">{selectedNode.label}</h3>

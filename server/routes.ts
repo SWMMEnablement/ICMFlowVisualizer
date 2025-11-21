@@ -114,6 +114,53 @@ ${message}`;
     }
   });
 
+  app.post('/api/ai-analyze', async (req, res) => {
+    try {
+      const { code, context } = req.body;
+      
+      if (!code || typeof code !== 'string') {
+        return res.status(400).json({ error: 'Invalid code provided' });
+      }
+
+      // Using Replit AI Integrations for Gemini access
+      const ai = new GoogleGenAI({
+        apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY || "dummy",
+        httpOptions: {
+          apiVersion: "",
+          baseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL,
+        },
+      });
+
+      const prompt = `You are an expert Ruby developer specializing in ICM InfoWorks automation scripts. Analyze the following Ruby code and provide a detailed overview.
+
+RUBY CODE:
+\`\`\`ruby
+${code}
+\`\`\`
+
+Provide:
+1. A brief summary of what this code does
+2. Key classes and their purposes
+3. Important methods and their functionality
+4. Any patterns or conventions used
+5. Dependencies or external integrations
+
+Keep the analysis concise but informative, written for a technical audience familiar with Ruby and InfoWorks.`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+      });
+
+      const analysis = response.text || "Unable to analyze code";
+
+      res.json({ analysis });
+    } catch (error) {
+      console.error('Error in AI analysis:', error instanceof Error ? error.message : String(error));
+      res.status(500).json({ error: 'Failed to analyze code' });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
