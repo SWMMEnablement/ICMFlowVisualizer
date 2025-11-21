@@ -58,8 +58,6 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
   const [aiOverview, setAiOverview] = useState<string>('');
   const [aiLoading, setAiLoading] = useState(false);
   const [mermaidDiagram, setMermaidDiagram] = useState<string>('');
-  const [mermaidLoading, setMermaidLoading] = useState(false);
-  const mermaidRef = useRef<HTMLDivElement>(null);
   const [nanoExplanation, setNanoExplanation] = useState<string>('');
   const [nanoLoading, setNanoLoading] = useState(false);
 
@@ -88,10 +86,9 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
 
   useEffect(() => {
     if (rubyCode && rubyCode.trim()) {
-      setMermaidLoading(true);
       setMermaidDiagram('');
       
-      // Call the mermaid diagram endpoint
+      // Call the diagram endpoint
       fetch('/api/mermaid-diagram', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -100,21 +97,12 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
         .then(res => res.json())
         .then(data => {
           setMermaidDiagram(data.diagram || '');
-          setMermaidLoading(false);
         })
         .catch(error => {
-          console.error('Error fetching mermaid diagram:', error);
-          setMermaidLoading(false);
+          console.error('Error fetching diagram:', error);
         });
     }
   }, [rubyCode]);
-
-  useEffect(() => {
-    if (mermaidDiagram && mermaidRef.current) {
-      // ASCII diagram - display as monospace pre-formatted text
-      mermaidRef.current.innerHTML = `<pre style="font-family: monospace; font-size: 13px; white-space: pre-wrap; overflow: auto; margin: 0;">${mermaidDiagram.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>`;
-    }
-  }, [mermaidDiagram]);
 
   useEffect(() => {
     if (rubyCode && rubyCode.trim()) {
@@ -402,24 +390,15 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
           {rubyCode && (
             <TabsContent value="mermaid" className="h-full m-0 p-4" data-testid="panel-mermaid">
               <ScrollArea className="h-full">
-                {mermaidLoading ? (
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-center space-y-2 py-8">
-                        <div className="text-center space-y-2">
-                          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-                          <p className="text-sm text-muted-foreground">Generating diagram...</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ) : mermaidDiagram ? (
+                {mermaidDiagram ? (
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-sm">Code Structure Diagram</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div ref={mermaidRef} className="w-full overflow-auto bg-muted/20 rounded p-4 font-mono text-sm" />
+                      <pre className="w-full overflow-auto bg-muted/20 rounded p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words">
+                        {mermaidDiagram}
+                      </pre>
                     </CardContent>
                   </Card>
                 ) : null}
