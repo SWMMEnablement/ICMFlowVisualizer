@@ -81,9 +81,11 @@ function parseSWMM5File(content: string): { sections: string[]; elements: Map<st
 export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', fileType = null, fileConfigs = [], statistics, logs = [], logsLoading, logsError }: MetadataPanelProps) {
   const [aiOverview, setAiOverview] = useState<string>('');
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string>('');
   const [mermaidDiagram, setMermaidDiagram] = useState<string>('');
   const [nanoExplanation, setNanoExplanation] = useState<string>('');
   const [nanoLoading, setNanoLoading] = useState(false);
+  const [nanoError, setNanoError] = useState<string>('');
   const [activeTab, setActiveTab] = useState<string>(() => {
     if (fileType === 'rb' && rubyCode) return 'analysis';
     if (fileType === 'inp' && rubyCode) return 'statistics';
@@ -103,6 +105,7 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
     if (rubyCode && rubyCode.trim()) {
       setAiLoading(true);
       setAiOverview('');
+      setAiError('');
       
       // Call the AI endpoint to get detailed overview
       fetch('/api/ai-analyze', {
@@ -112,11 +115,17 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
       })
         .then(res => res.json())
         .then(data => {
-          setAiOverview(data.analysis || '');
+          if (data.error) {
+            setAiError(data.error);
+          } else {
+            setAiOverview(data.analysis || '');
+            setAiError('');
+          }
           setAiLoading(false);
         })
         .catch(error => {
           console.error('Error fetching AI analysis:', error);
+          setAiError('Failed to analyze file');
           setAiLoading(false);
         });
     }
@@ -146,6 +155,7 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
     if (rubyCode && rubyCode.trim()) {
       setNanoLoading(true);
       setNanoExplanation('');
+      setNanoError('');
       
       // Calculate element count for SWMM5 files
       let elementCount = 0;
@@ -161,11 +171,17 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
       })
         .then(res => res.json())
         .then(data => {
-          setNanoExplanation(data.explanation || '');
+          if (data.error) {
+            setNanoError(data.error);
+          } else {
+            setNanoExplanation(data.explanation || '');
+            setNanoError('');
+          }
           setNanoLoading(false);
         })
         .catch(error => {
           console.error('Error fetching nano explanation:', error);
+          setNanoError('Failed to generate explanation');
           setNanoLoading(false);
         });
     }
@@ -409,6 +425,15 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
                         </div>
                       </CardContent>
                     </Card>
+                  ) : aiError ? (
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="text-center space-y-2">
+                          <p className="text-sm text-destructive">Unable to analyze: {aiError}</p>
+                          <p className="text-xs text-muted-foreground">AI service may be temporarily unavailable. Try again in a moment.</p>
+                        </div>
+                      </CardContent>
+                    </Card>
                   ) : aiOverview ? (
                     <Card>
                       <CardHeader>
@@ -498,6 +523,15 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
                           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
                           <p className="text-sm text-muted-foreground">Analyzing with AI...</p>
                         </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : nanoError ? (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="text-center space-y-2">
+                        <p className="text-sm text-destructive">Unable to generate explanation: {nanoError}</p>
+                        <p className="text-xs text-muted-foreground">AI service may be temporarily unavailable. Try again in a moment.</p>
                       </div>
                     </CardContent>
                   </Card>
