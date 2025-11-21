@@ -3,7 +3,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileText, Activity, BarChart3, Terminal, CheckCircle2, XCircle, AlertTriangle, Clock } from "lucide-react";
+import { FileText, Activity, BarChart3, Terminal, CheckCircle2, XCircle, AlertTriangle, Clock, Copy, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
 import mermaid from "mermaid";
@@ -60,6 +62,8 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
   const [mermaidDiagram, setMermaidDiagram] = useState<string>('');
   const [nanoExplanation, setNanoExplanation] = useState<string>('');
   const [nanoLoading, setNanoLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>(rubyCode ? 'analysis' : 'overview');
+  const [isCopied, setIsCopied] = useState(false);
 
   useEffect(() => {
     if (rubyCode && rubyCode.trim()) {
@@ -143,11 +147,56 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
 
   const analysis = rubyCode ? analyzeRubyCode(rubyCode) : null;
 
+  const getContentToCopy = (): string => {
+    switch (activeTab) {
+      case 'analysis':
+        if (!analysis) return '';
+        let analysisText = '';
+        if (fileName) analysisText += `File: ${fileName}\n\n`;
+        analysisText += `Summary: ${analysis.summary}\n\n`;
+        if (analysis.classes.length > 0) {
+          analysisText += `Classes:\n${analysis.classes.join('\n')}\n\n`;
+        }
+        if (analysis.methods.length > 0) {
+          analysisText += `Methods:\n${analysis.methods.join('\n')}\n`;
+        }
+        return analysisText;
+      case 'overview':
+        return aiOverview;
+      case 'nano':
+        return nanoExplanation;
+      case 'mermaid':
+        return mermaidDiagram;
+      case 'statistics':
+        if (!statistics) return '';
+        return `Files Processed: ${statistics.filesProcessed}
+Successful: ${statistics.filesSuccessful}
+Failed: ${statistics.filesFailed}
+Total Nodes: ${statistics.totalNodes}
+Total Links: ${statistics.totalLinks}
+Total Subcatchments: ${statistics.totalSubcatchments}
+Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
+      case 'logs':
+        return logs.map(log => `[${log.timestamp}] ${log.level}: ${log.message}${log.file ? ` (${log.file})` : ''}`).join('\n');
+      default:
+        return '';
+    }
+  };
+
+  const handleCopy = async () => {
+    const text = getContentToCopy();
+    if (text) {
+      await navigator.clipboard.writeText(text);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    }
+  };
+
   return (
     <div className="h-full bg-card border-l border-border">
-      <Tabs defaultValue={rubyCode ? "analysis" : "overview"} className="h-full flex flex-col">
-        <div className="border-b border-border px-4 py-3">
-          <TabsList className="grid w-full grid-cols-5 gap-1">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+        <div className="border-b border-border px-4 py-3 flex items-center justify-between">
+          <TabsList className="grid grid-cols-5 gap-1">
             {rubyCode && (
               <TabsTrigger value="analysis" className="text-xs" data-testid="tab-analysis">
                 <Activity className="w-3 h-3 mr-1" />
@@ -181,6 +230,25 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
               </TabsTrigger>
             )}
           </TabsList>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleCopy}
+                data-testid="button-copy-tab"
+              >
+                {isCopied ? (
+                  <Check className="w-4 h-4 text-secondary" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="left">
+              {isCopied ? 'Copied!' : 'Copy tab content'}
+            </TooltipContent>
+          </Tooltip>
         </div>
 
         <div className="flex-1 overflow-hidden">
