@@ -22,6 +22,7 @@ interface ReferenceModalProps {
 }
 
 const REFERENCE_FILES = [
+  { id: "help", label: "Ruby API Help", file: "/reference/help.md" },
   { id: "database", label: "Database Reference", file: "/reference/database.md" },
   { id: "glossary", label: "Glossary", file: "/reference/glossary.md" },
   { id: "patterns", label: "Pattern Reference", file: "/reference/patterns.md" },
@@ -29,7 +30,7 @@ const REFERENCE_FILES = [
 ];
 
 export function ReferenceModal({ open, onOpenChange }: ReferenceModalProps) {
-  const [selectedFile, setSelectedFile] = useState<string>("database");
+  const [selectedFile, setSelectedFile] = useState<string>("help");
   const [content, setContent] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
