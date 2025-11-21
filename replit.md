@@ -8,6 +8,21 @@ The application serves as both a code analysis and documentation tool, helping e
 
 ## Recent Changes
 
+### November 21, 2025 - Ruby Reference Files & Parser Improvements
+- **Added integrated Ruby reference documentation** accessible via "Reference" button in header
+- **Created 4 comprehensive reference guides** stored in `/public/reference/`:
+  - Database Reference - Table names (`hw_*`, `sw_*`), model object types, and API lookups
+  - Glossary - Class names, terminology, and naming conventions for InfoWorks ICM
+  - Pattern Reference - Common code patterns with examples for quick lookup
+  - Tutorial Context - Learning guide with examples and best practices
+- **Implemented ReferenceModal component** with dropdown selector and scrollable content viewer
+- **Fixed Ruby parser** to extract actual method definitions instead of comment patterns
+  - Now correctly finds `def method_name` patterns in real Ruby files
+  - Converts snake_case method names to readable Title Case
+  - Skips helper methods (initialize, private methods)
+  - Creates workflow step for each public method
+- **Added file parsing state indicator** - shows loading spinner while parsing new Ruby files
+
 ### November 19, 2025 - Exchange Script Node Enhancements
 - **Enhanced all 12 Exchange script workflow nodes** with detailed code annotations from source Ruby file
 - **Added helper function definitions** (log, is_label_list_empty?) to the retrieve_config node, making dependencies clear
@@ -82,6 +97,7 @@ Preferred communication style: Simple, everyday language.
 - `WorkflowEdge` - Connection rendering with arrow markers
 - `MetadataPanel` - Tabbed interface for node details, file lists, statistics, and logs
 - `LegendPanel` - Static reference for node types and visual conventions
+- `ReferenceModal` - Modal dialog with dropdown selector for accessing Ruby reference documentation
 
 **Separation of Concerns**: Clear boundaries between:
 - UI components (client/src/components/)
@@ -150,3 +166,21 @@ Google Fonts CDN loads three font families:
 - Inter (weights 400, 500, 600, 700) for headings
 - Roboto (weights 300, 400, 500, 700) for body text
 - Source Code Pro (weights 400, 500, 600) for code/technical content
+
+### Ruby Reference Documentation
+
+**Location**: `/public/reference/` and accessible via "Reference" button in app header
+
+**Contents**: Four markdown files providing comprehensive InfoWorks ICM Ruby scripting reference:
+1. **database.md** - Database table names, model object types, API lookup tables
+2. **glossary.md** - Terminology, class names, naming conventions
+3. **patterns.md** - Common code patterns with examples
+4. **tutorial.md** - Learning guide, best practices, error handling
+
+**Access**: Users click "Reference" button in header → ReferenceModal opens → Select guide from dropdown → Content displays in scrollable area
+
+**Use Cases**: 
+- Quick lookup of table names (hw_*, sw_*) while parsing Ruby files
+- Learning correct WSApplication API patterns
+- Understanding InfoWorks terminology and class structures
+- Troubleshooting common errors with reference patterns
