@@ -1,0 +1,73 @@
+Code Explanation
+This Ruby script interacts with InfoWorks ICM to analyze simulation results and generate an HTML report visualizing the utilization of pipes, pumps, and tanks.
+
+---
+
+### 1. What it does
+
+This script calculates the utilization percentage for pipes, pumps, and tanks based on a specified InfoWorks ICM simulation's peak results against their estimated or defined capacities. It then generates an interactive HTML "heatmap" report, highlighting the most utilized assets with color-coded status categories.
+
+### 2. How it works
+
+The script executes the following steps:
+
+1.  **Initialization and Database Connection**:
+    *   It starts by printing a "Starting..." message.
+    *   It attempts to open an InfoWorks ICM database. The database path can be provided as the first command-line argument (`ARGV[0]`); otherwise, it tries to open the currently active database in the ICM application.
+2.  **Simulation Retrieval and Validation**:
+    *   It expects a simulation name as the second command-line argument (`ARGV[1]`). If not provided, it lists available simulations and exits with usage instructions.
+    *   It then retrieves the specified simulation object (`sim_mo`) and checks if its status is 'Success'. If not, it prints an error and exits.
+    *   The network associated with the successful simulation is opened (`sim_mo.open`) to access its objects and results.
+3.  **Asset Data Extraction and Utilization Calculation**:
+    *   An empty `assets` array is initialized to store processed asset data.
+    *   **Pipes (`hw_conduit`)**:
+        *   Iterates through all `hw_conduit` objects in the network.
+        *   Retrieves the `peak_flow` result.
+        *   Estimates `capacity` by calculating the cross-sectional area (using `conduit_width` and `conduit_height`, converting mm to meters) and multiplying by an assumed maximum velocity (5 m/s).
+        *   If both `peak_flow` and `capacity` are available and valid, it calculates `utilization = (peak_flow.abs / capacity * 100)`.
+        *   Assigns a `status` ('Critical', 'High', 'Medium', 'Low') based on utilization thresholds (>100%, >85%, >70%).
+        *   Stores `id`, `type`, `util`, and `status` in the `assets` array.
+    *   **Pumps (`hw_pump`)**:
+        *   Iterates through all `hw_pump` objects.
+        *   Retrieves the `peak_flow` result.
+        *   Determines `capacity` from `rated_flow`, then `max_flow`. If neither is found, it estimates capacity as `peak_flow.abs * 1.2`.
+        *   Calculates `utilization` and assigns `status` using the same thresholds as pipes.
+        *   Stores asset data.
+    *   **Tanks (`hw_storage`)**:
+        *   Iterates through all `hw_storage` objects.
+        *   Retrieves `max_volume` result.
+        *   Determines `capacity` from `storage_volume`, then `max_volume`, then `volume` fields.
+        *   Calculates `utilization = (max_volume / capacity * 100)`.
+        *   Assigns `status` using slightly different thresholds (>90%, >70%).
+        *   Stores asset data.
+    *   After processing all asset types, the network is closed (`net.close`).
+4.  **HTML Report Generation**:
+    *   If no asset data is found, the script exits.
+    *   The `assets` array is sorted in descending order by utilization and then truncated to the top 20 entries.
+    *   An `outputs` directory is created if it doesn't exist, and an HTML file path (`asset_utilization.html`) is defined within it.
+    *   An HTML string is constructed, including embedded CSS for styling a grid layout and color-coding based on asset status.
+    *   For each asset in the (top 20) `assets` array, a `div` element is added to the HTML with its ID, type, utilization, and corresponding status class.
+    *   The complete HTML string is written to the defined file.
+    *   A success message with the file path is printed.
+5.  **Error Handling**: A `begin...rescue` block catches any exceptions, prints an error message, and exits with a non-zero status.
+
+### 3. Key components
+
+*   **`WSApplication`**: The primary interface for interacting with the InfoWorks ICM application and database.
+    *   `WSApplication.open(db_path)`: Opens an InfoWorks ICM database.
+*   **`db.model_object(name)`**: Retrieves a specific database object (e.g., a simulation).
+*   **`sim_mo.open`**: Opens the network associated with a simulation, making network objects and their results accessible.
+*   **`net.row_objects('hw_type')`**: Iterates over collections of specific InfoWorks ICM network object types, such as `'hw_conduit'` (pipes), `'hw_pump'` (pumps), and `'hw_storage'` (tanks/storage units).
+*   **`object['field_name']`**: Accesses a specific database field (attribute) of an InfoWorks ICM object. Example: `pipe['conduit_width']`.
+*   **`object.result('result_field_name')`**: Retrieves a simulation result for an object. Example: `pipe.result('flow')`. The `rescue nil` idiom is used to gracefully handle cases where a field or result might not exist.
+*   **`ARGV`**: Ruby's built-in array holding command-line arguments passed to the script.
+*   **`File.write`, `Dir.mkdir`**: Ruby standard library methods for file system operations, used here to create the output directory and write the HTML file.
+*   **String interpolation and concatenation (`+=`)**: Used extensively to build the dynamic HTML content.
+
+### 4. Why it matters (ICM InfoWorks context)
+
+*   **Performance Insight**: Provides a crucial, high-level overview of the operational performance of critical infrastructure assets (pipes, pumps, tanks) within a simulated scenario. It immediately highlights components that are either stressed (over-utilized) or potentially underutilized.
+*   **Decision Support**: Helps engineers and planners prioritize interventions by identifying bottlenecks or components operating near or beyond their design capacity. This directly informs decisions on infrastructure upgrades, system expansions, or operational adjustments.
+*   **Automated Reporting**: Automates the generation of a visually intuitive HTML report, which is easily shareable and does not require InfoWorks ICM software to view. This facilitates communication of simulation findings to non-technical stakeholders or for project documentation.
+*   **Proactive Asset Management**: By identifying "Critical" or "High" utilization assets, the script supports proactive asset management strategies, allowing for timely maintenance scheduling or capacity planning before failures occur.
+*   **Customizable Analysis**: Demonstrates the power of the InfoWorks ICM Ruby API to extract and process simulation data in ways not directly available through the standard GUI, enabling highly customized analyses and reports tailored to specific project needs. For example, the capacity calculation for pipes is a custom estimation based on typical velocity.

@@ -213,88 +213,155 @@ ${code}
         return res.status(400).json({ error: 'Invalid code provided' });
       }
 
-      // Extract code structure
+      // Extract detailed code structure
       const classMatches = Array.from(code.matchAll(/class\s+(\w+)/g)).map(m => m[1]);
-      const methodMatches = Array.from(code.matchAll(/def\s+(\w+)/g)).map(m => m[1]).filter(m => m !== 'initialize');
+      const methodMatches = Array.from(code.matchAll(/def\s+(\w+)/gm)).map(m => m[1]).filter(m => m !== 'initialize' && !m.startsWith('_'));
       const ifMatches = code.match(/if\s+/g) || [];
-      const loopMatches = code.match(/\.each|while|until/g) || [];
+      const loopMatches = code.match(/\.each|while|until|for\s+/g) || [];
+      const arrayMatches = code.match(/\[\s*\]|\s*<<\s*|\[.*?\]/g) || [];
+      const hashMatches = code.match(/\{\s*\}|=>\s*|Hash\.new/g) || [];
+      const callMatches = Array.from(code.matchAll(/(\w+)\s*\(/g)).map(m => m[1]).filter(m => m && !['if', 'puts', 'print', 'unless', 'while'].includes(m)).slice(0, 5);
+      const fileOpsMatches = code.match(/File\.|Dir\.|\.write|\.read|\.open/g) || [];
+      const apiCallsMatches = Array.from(code.matchAll(/WSApplication\.|\.open|\.result|\.row_objects|model_object/g));
 
-      // Build ASCII diagram
-      let diagram = '┌─ CODE STRUCTURE DIAGRAM ─┐\n\n';
-      diagram += '  ┌──────────────┐\n';
-      diagram += '  │    START     │\n';
-      diagram += '  └──────┬───────┘\n';
-      diagram += '         │\n';
-      
-      // Add classes if present
+      // Build detailed ASCII diagram
+      let diagram = '╔═══════════════════════════════════════════════════════════╗\n';
+      diagram += '║           RUBY CODE STRUCTURE ANALYSIS                     ║\n';
+      diagram += '╚═══════════════════════════════════════════════════════════╝\n\n';
+
+      // Starting point
+      diagram += '  ┏━━━━━━━━━━━━━━━━━━━━━━━┓\n';
+      diagram += '  ┃     SCRIPT START      ┃\n';
+      diagram += '  ┗━━━━━━━━━━━━━━━━━━━━━━━┛\n';
+      diagram += '           ↓\n';
+
+      // API/Database interactions
+      if (apiCallsMatches.length > 0) {
+        diagram += '  ┌─────────────────────────────────┐\n';
+        diagram += '  │  INFWORKS ICM API CALLS (${apiCallsMatches.length})     │\n';
+        diagram += '  │  • WSApplication.open()         │\n';
+        diagram += '  │  • model_object()               │\n';
+        diagram += '  │  • row_objects()                │\n';
+        diagram += '  │  • .result() [peak data]        │\n';
+        diagram += '  └─────────────────────────────────┘\n';
+        diagram += '           ↓\n';
+      }
+
+      // Classes
       if (classMatches.length > 0) {
-        diagram += '  ┌──────────────────────────────┐\n';
-        if (classMatches.length === 1) {
-          diagram += `  │  CLASS: ${classMatches[0].padEnd(18)}  │\n`;
-        } else {
-          diagram += `  │  CLASSES (${classMatches.length})${' '.repeat(14)}  │\n`;
-          classMatches.forEach(cls => {
-            diagram += `  │    • ${cls}${' '.repeat(Math.max(0, 20 - cls.length))}│\n`;
-          });
-        }
-        diagram += '  └──────────────────────────────┘\n';
-        diagram += '         │\n';
+        diagram += '  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n';
+        diagram += `  ┃  CLASSES DEFINED (${classMatches.length.toString().padEnd(2)})         ┃\n`;
+        classMatches.forEach(cls => {
+          const paddedName = cls.padEnd(25);
+          diagram += `  ┃    • ${paddedName}  ┃\n`;
+        });
+        diagram += '  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n';
+        diagram += '           ↓\n';
       }
-      
-      // Add methods if present
+
+      // Methods/Functions
       if (methodMatches.length > 0) {
-        diagram += '  ┌──────────────────────────────┐\n';
-        if (methodMatches.length === 1) {
-          diagram += `  │  METHOD: ${methodMatches[0].padEnd(18)}  │\n`;
-        } else {
-          diagram += `  │  METHODS (${methodMatches.length})${' '.repeat(14)}  │\n`;
-          methodMatches.slice(0, 3).forEach(method => {
-            diagram += `  │    • ${method}${' '.repeat(Math.max(0, 20 - method.length))}│\n`;
-          });
-          if (methodMatches.length > 3) {
-            diagram += `  │    ... and ${methodMatches.length - 3} more        │\n`;
-          }
+        diagram += '  ┌─────────────────────────────────┐\n';
+        diagram += `  │  METHODS DEFINED (${methodMatches.length.toString().padEnd(2)})       │\n`;
+        methodMatches.slice(0, 5).forEach(method => {
+          const paddedName = method.padEnd(25);
+          diagram += `  │    • ${paddedName}  │\n`;
+        });
+        if (methodMatches.length > 5) {
+          diagram += `  │    ... and ${(methodMatches.length - 5)} more methods        │\n`;
         }
-        diagram += '  └──────────────────────────────┘\n';
-        diagram += '         │\n';
+        diagram += '  └─────────────────────────────────┘\n';
+        diagram += '           ↓\n';
       }
-      
-      // Add conditionals
-      if (ifMatches.length > 0) {
-        diagram += '  ┌──────────────────────────────┐\n';
-        diagram += `  │  LOGIC BRANCHES (${ifMatches.length})${' '.repeat(8)}  │\n`;
-        diagram += '  └──────────────────────────────┘\n';
-        diagram += '         │\n';
+
+      // Data Processing
+      diagram += '  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n';
+      diagram += '  ┃  DATA PROCESSING               ┃\n';
+      if (arrayMatches.length > 0) {
+        diagram += `  ┃  • Array operations (${arrayMatches.length})         ┃\n`;
       }
-      
-      // Add loops
-      if (loopMatches.length > 0) {
-        diagram += '  ┌──────────────────────────────┐\n';
-        diagram += `  │  ITERATIONS (${loopMatches.length})${' '.repeat(12)}  │\n`;
-        diagram += '  └──────────────────────────────┘\n';
-        diagram += '         │\n';
+      if (hashMatches.length > 0) {
+        diagram += `  ┃  • Hash/Map structures (${hashMatches.length})     ┃\n`;
       }
-      
-      // Add end point
-      diagram += '  ┌──────────────┐\n';
-      diagram += '  │   COMPLETE   │\n';
-      diagram += '  └──────────────┘\n';
+      if (callMatches.length > 0) {
+        diagram += `  ┃  • Custom calls (${callMatches.length})             ┃\n`;
+      }
+      diagram += '  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n';
+      diagram += '           ↓\n';
+
+      // Control Flow
+      if (ifMatches.length > 0 || loopMatches.length > 0) {
+        diagram += '  ┌─────────────────────────────────┐\n';
+        diagram += '  │  CONTROL FLOW                   │\n';
+        if (ifMatches.length > 0) {
+          diagram += `  │  • Conditionals: ${ifMatches.length.toString().padEnd(2)}                 │\n`;
+        }
+        if (loopMatches.length > 0) {
+          diagram += `  │  • Iterations: ${loopMatches.length.toString().padEnd(2)}                   │\n`;
+        }
+        diagram += '  └─────────────────────────────────┘\n';
+        diagram += '           ↓\n';
+      }
+
+      // File Operations
+      if (fileOpsMatches.length > 0) {
+        diagram += '  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n';
+        diagram += `  ┃  FILE I/O OPERATIONS (${fileOpsMatches.length})        ┃\n`;
+        diagram += '  ┃  • File.write()                 ┃\n';
+        diagram += '  ┃  • Dir.mkdir()                  ┃\n';
+        diagram += '  ┃  • Output generation            ┃\n';
+        diagram += '  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n';
+        diagram += '           ↓\n';
+      }
+
+      // Error Handling
+      const errorHandling = code.match(/begin|rescue|raise|ensure/g) || [];
+      if (errorHandling.length > 0) {
+        diagram += '  ┌─────────────────────────────────┐\n';
+        diagram += '  │  ERROR HANDLING                 │\n';
+        diagram += `  │  • Exception blocks (${(errorHandling.length / 2).toFixed(0).padEnd(2)})       │\n`;
+        diagram += '  │  • Graceful failure management  │\n';
+        diagram += '  └─────────────────────────────────┘\n';
+        diagram += '           ↓\n';
+      }
+
+      // Summary stats
+      diagram += '  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n';
+      diagram += '  ┃  CODE STATISTICS               ┃\n';
+      diagram += `  ┃  Methods: ${methodMatches.length.toString().padEnd(2)}  Classes: ${classMatches.length.toString().padEnd(2)}  Loops: ${loopMatches.length.toString().padEnd(2)}        ┃\n`;
+      diagram += `  ┃  Conditions: ${ifMatches.length.toString().padEnd(2)}  API Calls: ${apiCallsMatches.length.toString().padEnd(2)}      ┃\n`;
+      diagram += '  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n';
+      diagram += '           ↓\n';
+
+      // End
+      diagram += '  ┏━━━━━━━━━━━━━━━━━━━━━━━┓\n';
+      diagram += '  ┃      EXECUTION       ┃\n';
+      diagram += '  ┃       COMPLETE       ┃\n';
+      diagram += '  ┗━━━━━━━━━━━━━━━━━━━━━━━┛\n';
 
       res.json({ diagram: diagram.trim() });
     } catch (error) {
       console.error('Error generating diagram:', error instanceof Error ? error.message : String(error));
-      const fallback = `┌─ CODE STRUCTURE ─┐
-│  ┌──────────────┐
-│  │    START     │
-│  └──────┬───────┘
-│         │
-│  ┌──────────────┐
-│  │ Ruby Code    │
-│  └──────┬───────┘
-│         │
-│  ┌──────────────┐
-│  │   COMPLETE   │
-│  └──────────────┘`;
+      const fallback = `╔══════════════════════════════════════╗
+║    RUBY CODE STRUCTURE ANALYSIS    ║
+╚══════════════════════════════════════╝
+
+  ┏━━━━━━━━━━━━━━━━━━━━━━━┓
+  ┃     SCRIPT START      ┃
+  ┗━━━━━━━━━━━━━━━━━━━━━━━┛
+           ↓
+  ┌─────────────────────────┐
+  │  Data Processing        │
+  └─────────────────────────┘
+           ↓
+  ┏━━━━━━━━━━━━━━━━━━━━━━━┓
+  ┃   OUTPUT GENERATION   ┃
+  ┗━━━━━━━━━━━━━━━━━━━━━━━┛
+           ↓
+  ┏━━━━━━━━━━━━━━━━━━━━━━━┓
+  ┃      EXECUTION       ┃
+  ┃       COMPLETE       ┃
+  ┗━━━━━━━━━━━━━━━━━━━━━━━┛`;
       res.json({ diagram: fallback });
     }
   });
