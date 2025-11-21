@@ -109,8 +109,8 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
 
   useEffect(() => {
     if (mermaidDiagram && mermaidRef.current) {
-      mermaidRef.current.innerHTML = mermaidDiagram;
-      mermaid.contentLoaded();
+      mermaidRef.current.innerHTML = `<div class="mermaid">${mermaidDiagram}</div>`;
+      mermaid.run();
     }
   }, [mermaidDiagram]);
 
@@ -361,7 +361,7 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
                       <CardTitle className="text-sm">Code Structure Diagram</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div ref={mermaidRef} className="flex justify-center items-center bg-muted/30 rounded p-4 overflow-x-auto" />
+                      <div ref={mermaidRef} className="flex justify-center items-center w-full overflow-x-auto" />
                     </CardContent>
                   </Card>
                 ) : null}
