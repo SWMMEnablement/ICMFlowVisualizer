@@ -9,15 +9,6 @@ export function parseRubyFile(rubyCode: string): WorkflowDefinition {
   let nodeCount = 0;
   let previousNodeId: string | null = null;
   
-  // Add start node
-  nodes.push({
-    id: 'start',
-    type: 'start',
-    label: 'Start',
-    position: { x: 300, y: 100 }
-  });
-  previousNodeId = 'start';
-  
   // Find all method definitions by looking for 'def method_name' pattern
   const methods: Array<{ name: string; lineStart: number; lineEnd: number }> = [];
   
@@ -108,22 +99,6 @@ export function parseRubyFile(rubyCode: string): WorkflowDefinition {
     previousNodeId = nodeId;
   }
   
-  // Add end node
-  nodes.push({
-    id: 'end',
-    type: 'end',
-    label: 'End',
-    position: { x: 300, y: 100 + (nodeCount + 1) * 200 }
-  });
-  
-  if (previousNodeId && previousNodeId !== 'end') {
-    edges.push({
-      id: `e_final`,
-      source: previousNodeId,
-      target: 'end',
-      type: 'primary'
-    });
-  }
   
   return {
     nodes,
