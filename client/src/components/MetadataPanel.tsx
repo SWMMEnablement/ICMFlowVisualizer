@@ -100,7 +100,7 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
   }, [fileType, rubyCode]);
 
   useEffect(() => {
-    if (rubyCode && rubyCode.trim() && fileType === 'rb') {
+    if (rubyCode && rubyCode.trim()) {
       setAiLoading(true);
       setAiOverview('');
       
@@ -120,7 +120,7 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
           setAiLoading(false);
         });
     }
-  }, [rubyCode, fileType]);
+  }, [rubyCode]);
 
   useEffect(() => {
     if (rubyCode && rubyCode.trim()) {
@@ -143,7 +143,7 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
   }, [rubyCode]);
 
   useEffect(() => {
-    if (rubyCode && rubyCode.trim() && fileType === 'rb') {
+    if (rubyCode && rubyCode.trim()) {
       setNanoLoading(true);
       setNanoExplanation('');
       
@@ -162,7 +162,7 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
           setNanoLoading(false);
         });
     }
-  }, [rubyCode, fileType]);
+  }, [rubyCode]);
 
   const getStatusBadge = (status?: string) => {
     switch (status) {
@@ -389,7 +389,7 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
           {(fileType === 'rb' || fileType === 'inp') && (
           <TabsContent value="overview" className="h-full m-0 p-4" data-testid="panel-overview">
             <ScrollArea className="h-full">
-              {rubyCode && fileType === 'rb' ? (
+              {rubyCode ? (
                 <div className="space-y-4 pr-4">
                   {aiLoading ? (
                     <Card>
@@ -397,7 +397,7 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
                         <div className="flex items-center justify-center space-y-2 py-8">
                           <div className="text-center space-y-2">
                             <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-                            <p className="text-sm text-muted-foreground">Analyzing code with AI...</p>
+                            <p className="text-sm text-muted-foreground">Analyzing with AI...</p>
                           </div>
                         </div>
                       </CardContent>
@@ -405,17 +405,13 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
                   ) : aiOverview ? (
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-sm">Code Overview</CardTitle>
+                        <CardTitle className="text-sm">{fileType === 'rb' ? 'Code' : 'File'} Overview</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <p className="text-sm text-primary font-bold leading-relaxed whitespace-pre-wrap">{aiOverview}</p>
                       </CardContent>
                     </Card>
                   ) : null}
-                </div>
-              ) : fileType === 'inp' ? (
-                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                  <p>Overview not available for SWMM5 configuration files</p>
                 </div>
               ) : selectedNode ? (
                 <div className="space-y-4">
@@ -487,34 +483,26 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
           {rubyCode && (
             <TabsContent value="nano" className="h-full m-0 p-4" data-testid="panel-nano">
               <ScrollArea className="h-full">
-                {fileType === 'rb' ? (
-                  <>
-                    {nanoLoading ? (
-                      <Card>
-                        <CardContent className="pt-6">
-                          <div className="flex items-center justify-center space-y-2 py-8">
-                            <div className="text-center space-y-2">
-                              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-                              <p className="text-sm text-muted-foreground">Explaining code...</p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ) : nanoExplanation ? (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-sm">Code Explanation</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{nanoExplanation}</p>
-                        </CardContent>
-                      </Card>
-                    ) : null}
-                  </>
-                ) : fileType === 'inp' ? (
-                  <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                    <p>Nano Banana explanation not available for SWMM5 configuration files</p>
-                  </div>
+                {nanoLoading ? (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-center space-y-2 py-8">
+                        <div className="text-center space-y-2">
+                          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                          <p className="text-sm text-muted-foreground">Analyzing with AI...</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : nanoExplanation ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm">Detailed Explanation</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{nanoExplanation}</p>
+                    </CardContent>
+                  </Card>
                 ) : null}
               </ScrollArea>
             </TabsContent>
