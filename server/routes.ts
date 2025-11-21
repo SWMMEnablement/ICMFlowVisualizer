@@ -163,7 +163,7 @@ Keep the analysis concise but informative, written for a technical audience fami
 
   app.post('/api/nano-explain', async (req, res) => {
     try {
-      const { code } = req.body;
+      const { code, elementCount = 0, fileType } = req.body;
       
       if (!code || typeof code !== 'string') {
         return res.status(400).json({ error: 'Invalid code provided' });
@@ -177,7 +177,24 @@ Keep the analysis concise but informative, written for a technical audience fami
         },
       });
 
-      const prompt = `Explain this Ruby code using the Nano Banana Prompt framework. Structure your explanation as:
+      let prompt = '';
+      
+      if (fileType === 'inp') {
+        prompt = `Explain this SWMM5 configuration file using the Nano Banana Prompt framework. The file contains ${elementCount} total elements across multiple sections. Structure your explanation as:
+
+1. **What it contains**: High-level summary of the configuration purpose in 1-2 sentences
+2. **Structure overview**: Key sections and their roles
+3. **Element breakdown**: Summary of elements (${elementCount} total) and their distribution across sections
+4. **Configuration purpose**: What this SWMM5 setup is designed to model or simulate
+
+Keep explanations concise and technical. Focus on the configuration's structure and purpose.
+
+SWMM5 FILE:
+\`\`\`ini
+${code}
+\`\`\``;
+      } else {
+        prompt = `Explain this Ruby code using the Nano Banana Prompt framework. Structure your explanation as:
 
 1. **What it does**: High-level summary in 1-2 sentences
 2. **How it works**: Step-by-step walkthrough of the logic
@@ -190,6 +207,7 @@ RUBY CODE:
 \`\`\`ruby
 ${code}
 \`\`\``;
+      }
 
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",

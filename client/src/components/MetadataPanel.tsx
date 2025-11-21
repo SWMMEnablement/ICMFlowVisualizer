@@ -147,10 +147,17 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
       setNanoLoading(true);
       setNanoExplanation('');
       
+      // Calculate element count for SWMM5 files
+      let elementCount = 0;
+      if (fileType === 'inp') {
+        const swmm5Data = parseSWMM5File(rubyCode);
+        elementCount = Array.from(swmm5Data.elements.values()).reduce((sum, count) => sum + count, 0);
+      }
+      
       fetch('/api/nano-explain', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: rubyCode })
+        body: JSON.stringify({ code: rubyCode, elementCount, fileType })
       })
         .then(res => res.json())
         .then(data => {
@@ -162,7 +169,7 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
           setNanoLoading(false);
         });
     }
-  }, [rubyCode]);
+  }, [rubyCode, fileType]);
 
   const getStatusBadge = (status?: string) => {
     switch (status) {
