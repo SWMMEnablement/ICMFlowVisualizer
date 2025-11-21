@@ -3,15 +3,15 @@ import { type WorkflowNode, type WorkflowDefinition, type LogEntry } from "@shar
 import { MetadataPanel } from "@/components/MetadataPanel";
 import { LegendPanel } from "@/components/LegendPanel";
 import { OnboardingDialog } from "@/components/OnboardingDialog";
-import { WorkflowStepList } from "@/components/WorkflowStepList";
 import { AIAssistant } from "@/components/AIAssistant";
 import { WorkflowCanvas } from "@/components/WorkflowCanvas";
 import { MarkdownEditor } from "@/components/MarkdownEditor";
 import { ReferenceModal } from "@/components/ReferenceModal";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Info, PanelRightClose, PanelRightOpen, List, ListCollapse, Upload, FileText, BookOpen } from "lucide-react";
+import { Info, PanelRightClose, PanelRightOpen, Upload, FileText, BookOpen } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 
@@ -21,11 +21,11 @@ export default function WorkflowVisualization() {
   const [selectedNode, setSelectedNode] = useState<WorkflowNode | undefined>();
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [isLegendOpen, setIsLegendOpen] = useState(false);
-  const [isStepListOpen, setIsStepListOpen] = useState(true);
   const [isMarkdownOpen, setIsMarkdownOpen] = useState(false);
   const [isReferenceOpen, setIsReferenceOpen] = useState(false);
   const [phaseFilter] = useState<PhaseFilter>('all');
-  const [isParsingFile, setIsParsingFile] = useState(false);
+  const [rubyCode, setRubyCode] = useState<string>('');
+  const [fileName, setFileName] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: workflowData, isLoading, error } = useQuery<WorkflowDefinition>({
@@ -67,25 +67,11 @@ export default function WorkflowVisualization() {
       return;
     }
 
-    setIsParsingFile(true);
     const reader = new FileReader();
     reader.onload = (event) => {
       const content = event.target?.result as string;
-      fetch('/api/parse-ruby', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rubyCode: content })
-      })
-        .then(r => r.json())
-        .then(() => {
-          queryClient.invalidateQueries({ queryKey: ['/api/workflow'] });
-          setSelectedNode(undefined);
-          setIsParsingFile(false);
-        })
-        .catch(error => {
-          console.error('Error parsing Ruby file:', error);
-          setIsParsingFile(false);
-        });
+      setRubyCode(content);
+      setFileName(file.name);
     };
     reader.readAsText(file);
   };
@@ -156,24 +142,6 @@ export default function WorkflowVisualization() {
 
 
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsStepListOpen(!isStepListOpen)}
-              data-testid="button-toggle-steps"
-            >
-              {isStepListOpen ? (
-                <>
-                  <ListCollapse className="w-4 h-4 mr-2" />
-                  Hide Steps
-                </>
-              ) : (
-                <>
-                  <List className="w-4 h-4 mr-2" />
-                  Show Steps
-                </>
-              )}
-            </Button>
             <AIAssistant selectedNode={selectedNode} />
             <Sheet open={isMarkdownOpen} onOpenChange={setIsMarkdownOpen}>
               <SheetTrigger asChild>
@@ -231,24 +199,26 @@ export default function WorkflowVisualization() {
       <ReferenceModal open={isReferenceOpen} onOpenChange={setIsReferenceOpen} />
 
       <div className="flex-1 flex overflow-hidden">
-        {isStepListOpen && (
-          <div className="w-[420px] flex-shrink-0 border-r border-border">
-            {isParsingFile ? (
-              <div className="h-full bg-card border-r border-border flex items-center justify-center">
-                <div className="text-center space-y-3">
-                  <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-                  <p className="text-xs text-muted-foreground">Parsing Ruby file...</p>
-                </div>
-              </div>
-            ) : (
-              <WorkflowStepList
-                nodes={filteredNodes}
-                selectedNodeId={selectedNode?.id}
-                onNodeSelect={setSelectedNode}
-              />
-            )}
+        <div className="w-[420px] flex-shrink-0 border-r border-border flex flex-col bg-card">
+          <div className="px-4 py-3 border-b border-border">
+            <h3 className="font-semibold text-sm">Ruby Code</h3>
+            {fileName && <p className="text-xs text-muted-foreground mt-1">{fileName}</p>}
           </div>
-        )}
+          {rubyCode ? (
+            <ScrollArea className="flex-1">
+              <pre className="p-4 text-xs font-mono text-foreground whitespace-pre-wrap break-words leading-relaxed">
+                {rubyCode}
+              </pre>
+            </ScrollArea>
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-center px-4">
+              <div className="text-muted-foreground text-sm">
+                <p className="mb-2">No Ruby file loaded</p>
+                <p className="text-xs">Click "Open .rb File" to upload a Ruby script</p>
+              </div>
+            </div>
+          )}
+        </div>
 
         {isPanelOpen && (
           <div className="flex-1 min-w-0">
