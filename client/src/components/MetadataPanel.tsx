@@ -231,20 +231,20 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
     <div className="h-full bg-card border-l border-border">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
         <div className="border-b border-border px-4 py-3 flex items-center justify-between">
-          <TabsList className={`grid ${fileType === 'inp' ? 'grid-cols-3' : 'grid-cols-5'} gap-1`}>
+          <TabsList className={`grid ${fileType === 'inp' ? 'grid-cols-4' : 'grid-cols-5'} gap-1`}>
             {rubyCode && fileType === 'rb' && (
               <TabsTrigger value="analysis" className="text-xs" data-testid="tab-analysis">
                 <Activity className="w-3 h-3 mr-1" />
                 Analysis
               </TabsTrigger>
             )}
-            {fileType === 'rb' && rubyCode && (
+            {rubyCode && (
             <TabsTrigger value="overview" className="text-xs" data-testid="tab-overview">
               <Activity className="w-3 h-3 mr-1" />
               Overview
             </TabsTrigger>
             )}
-            {rubyCode && fileType === 'rb' && (
+            {rubyCode && (
               <TabsTrigger value="nano" className="text-xs" data-testid="tab-nano">
                 <Terminal className="w-3 h-3 mr-1" />
                 Nano Banana
@@ -380,10 +380,10 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
             </TabsContent>
           )}
 
-          {fileType === 'rb' && (
+          {(fileType === 'rb' || fileType === 'inp') && (
           <TabsContent value="overview" className="h-full m-0 p-4" data-testid="panel-overview">
             <ScrollArea className="h-full">
-              {rubyCode ? (
+              {rubyCode && fileType ? (
                 <div className="space-y-4 pr-4">
                   {aiLoading ? (
                     <Card>
@@ -474,7 +474,7 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
           </TabsContent>
           )}
 
-          {rubyCode && fileType === 'rb' && (
+          {rubyCode && (
             <TabsContent value="nano" className="h-full m-0 p-4" data-testid="panel-nano">
               <ScrollArea className="h-full">
                 {nanoLoading ? (
