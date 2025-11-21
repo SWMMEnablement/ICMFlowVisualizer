@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { type WorkflowNode, type WorkflowDefinition, type LogEntry } from "@shared/schema";
 import { MetadataPanel } from "@/components/MetadataPanel";
 import { OnboardingDialog } from "@/components/OnboardingDialog";
+import { AboutDialog } from "@/components/AboutDialog";
 import { AIAssistant } from "@/components/AIAssistant";
 import { WorkflowCanvas } from "@/components/WorkflowCanvas";
 import { MarkdownEditor } from "@/components/MarkdownEditor";
@@ -11,7 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { PanelRightClose, PanelRightOpen, Upload, FileText, BookOpen } from "lucide-react";
+import { PanelRightClose, PanelRightOpen, Upload, FileText, BookOpen, Info } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 
@@ -22,6 +23,7 @@ export default function WorkflowVisualization() {
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [isMarkdownOpen, setIsMarkdownOpen] = useState(false);
   const [isReferenceOpen, setIsReferenceOpen] = useState(false);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [phaseFilter] = useState<PhaseFilter>('all');
   const [rubyCode, setRubyCode] = useState<string>('');
   const [fileName, setFileName] = useState<string>('');
@@ -110,6 +112,7 @@ export default function WorkflowVisualization() {
   return (
     <div className="h-screen flex flex-col bg-background">
       <OnboardingDialog />
+      <AboutDialog open={isAboutOpen} onOpenChange={setIsAboutOpen} />
       <header className="border-b border-border bg-card px-6 py-4">
         <div className="flex items-center justify-between gap-6">
           <div className="flex items-center gap-3">
@@ -148,6 +151,22 @@ export default function WorkflowVisualization() {
 
 
           <div className="flex gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAboutOpen(true)}
+                  data-testid="button-about"
+                >
+                  <Info className="w-4 h-4 mr-2" />
+                  About
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                Learn about ICM Ruby Workflow
+              </TooltipContent>
+            </Tooltip>
             <AIAssistant selectedNode={selectedNode} />
             <Sheet open={isMarkdownOpen} onOpenChange={setIsMarkdownOpen}>
               <Tooltip>
