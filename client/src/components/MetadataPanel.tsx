@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileText, Activity, BarChart3, Terminal, CheckCircle2, XCircle, AlertTriangle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import mermaid from "mermaid";
 
 interface MetadataPanelProps {
   selectedNode?: WorkflowNode;
@@ -56,6 +57,9 @@ function analyzeRubyCode(code: string): { methods: string[]; classes: string[]; 
 export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', fileConfigs = [], statistics, logs = [], logsLoading, logsError }: MetadataPanelProps) {
   const [aiOverview, setAiOverview] = useState<string>('');
   const [aiLoading, setAiLoading] = useState(false);
+  const [mermaidDiagram, setMermaidDiagram] = useState<string>('');
+  const [mermaidLoading, setMermaidLoading] = useState(false);
+  const mermaidRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (rubyCode && rubyCode.trim()) {
@@ -80,6 +84,36 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
     }
   }, [rubyCode]);
 
+  useEffect(() => {
+    if (rubyCode && rubyCode.trim()) {
+      setMermaidLoading(true);
+      setMermaidDiagram('');
+      
+      // Call the mermaid diagram endpoint
+      fetch('/api/mermaid-diagram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: rubyCode })
+      })
+        .then(res => res.json())
+        .then(data => {
+          setMermaidDiagram(data.diagram || '');
+          setMermaidLoading(false);
+        })
+        .catch(error => {
+          console.error('Error fetching mermaid diagram:', error);
+          setMermaidLoading(false);
+        });
+    }
+  }, [rubyCode]);
+
+  useEffect(() => {
+    if (mermaidDiagram && mermaidRef.current) {
+      mermaidRef.current.innerHTML = mermaidDiagram;
+      mermaid.contentLoaded();
+    }
+  }, [mermaidDiagram]);
+
   const getStatusBadge = (status?: string) => {
     switch (status) {
       case 'success':
@@ -101,7 +135,7 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
     <div className="h-full bg-card border-l border-border">
       <Tabs defaultValue={rubyCode ? "analysis" : "overview"} className="h-full flex flex-col">
         <div className="border-b border-border px-4 py-3">
-          <TabsList className="grid w-full grid-cols-3 gap-1">
+          <TabsList className="grid w-full grid-cols-4 gap-1">
             {rubyCode && (
               <TabsTrigger value="analysis" className="text-xs" data-testid="tab-analysis">
                 <Activity className="w-3 h-3 mr-1" />
@@ -112,6 +146,12 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
               <Activity className="w-3 h-3 mr-1" />
               Overview
             </TabsTrigger>
+            {rubyCode && (
+              <TabsTrigger value="mermaid" className="text-xs" data-testid="tab-mermaid">
+                <BarChart3 className="w-3 h-3 mr-1" />
+                Diagram
+              </TabsTrigger>
+            )}
             <TabsTrigger value="statistics" className="text-xs" data-testid="tab-statistics">
               <BarChart3 className="w-3 h-3 mr-1" />
               Stats
@@ -300,6 +340,34 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
               )}
             </ScrollArea>
           </TabsContent>
+
+          {rubyCode && (
+            <TabsContent value="mermaid" className="h-full m-0 p-4" data-testid="panel-mermaid">
+              <ScrollArea className="h-full">
+                {mermaidLoading ? (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-center space-y-2 py-8">
+                        <div className="text-center space-y-2">
+                          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                          <p className="text-sm text-muted-foreground">Generating diagram...</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : mermaidDiagram ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm">Code Structure Diagram</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div ref={mermaidRef} className="flex justify-center items-center bg-muted/30 rounded p-4 overflow-x-auto" />
+                    </CardContent>
+                  </Card>
+                ) : null}
+              </ScrollArea>
+            </TabsContent>
+          )}
 
           <TabsContent value="statistics" className="h-full m-0 p-4" data-testid="panel-statistics">
             <ScrollArea className="h-full">

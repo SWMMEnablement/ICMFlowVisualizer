@@ -161,6 +161,56 @@ Keep the analysis concise but informative, written for a technical audience fami
     }
   });
 
+  app.post('/api/mermaid-diagram', async (req, res) => {
+    try {
+      const { code } = req.body;
+      
+      if (!code || typeof code !== 'string') {
+        return res.status(400).json({ error: 'Invalid code provided' });
+      }
+
+      // Using Replit AI Integrations for Gemini access
+      const ai = new GoogleGenAI({
+        apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY || "dummy",
+        httpOptions: {
+          apiVersion: "",
+          baseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL,
+        },
+      });
+
+      const prompt = `You are an expert at creating mermaid diagrams to visualize code structure. Analyze the following Ruby code and generate a mermaid diagram that shows:
+- Classes and their relationships
+- Major methods and their flow
+- Key data structures and dependencies
+
+Return ONLY the mermaid diagram code (starting with \`graph TD\` or similar), wrapped in \`\`\`mermaid\`\`\` tags. No other text.
+
+RUBY CODE:
+\`\`\`ruby
+${code}
+\`\`\``;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+      });
+
+      let diagram = response.text || "";
+      
+      // Extract mermaid code from markdown if wrapped in code blocks
+      if (diagram.includes('```mermaid')) {
+        diagram = diagram.match(/```mermaid\n([\s\S]*?)\n```/)?.[1] || diagram;
+      } else if (diagram.includes('```')) {
+        diagram = diagram.match(/```\n?([\s\S]*?)\n?```/)?.[1] || diagram;
+      }
+
+      res.json({ diagram: diagram.trim() });
+    } catch (error) {
+      console.error('Error generating mermaid diagram:', error instanceof Error ? error.message : String(error));
+      res.status(500).json({ error: 'Failed to generate diagram' });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
