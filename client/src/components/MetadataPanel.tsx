@@ -231,20 +231,20 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
     <div className="h-full bg-card border-l border-border">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
         <div className="border-b border-border px-4 py-3 flex items-center justify-between">
-          <TabsList className={`grid ${fileType === 'inp' ? 'grid-cols-2' : 'grid-cols-5'} gap-1`}>
+          <TabsList className={`grid ${fileType === 'inp' ? 'grid-cols-4' : 'grid-cols-5'} gap-1`}>
             {rubyCode && fileType === 'rb' && (
               <TabsTrigger value="analysis" className="text-xs" data-testid="tab-analysis">
                 <Activity className="w-3 h-3 mr-1" />
                 Analysis
               </TabsTrigger>
             )}
-            {rubyCode && fileType === 'rb' && (
+            {rubyCode && (
             <TabsTrigger value="overview" className="text-xs" data-testid="tab-overview">
               <Activity className="w-3 h-3 mr-1" />
               Overview
             </TabsTrigger>
             )}
-            {rubyCode && fileType === 'rb' && (
+            {rubyCode && (
               <TabsTrigger value="nano" className="text-xs" data-testid="tab-nano">
                 <Terminal className="w-3 h-3 mr-1" />
                 Nano Banana
@@ -267,6 +267,12 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
               <BarChart3 className="w-3 h-3 mr-1" />
               Stats
             </TabsTrigger>
+            )}
+            {rubyCode && fileType === 'inp' && (
+              <TabsTrigger value="logs" className="text-xs" data-testid="tab-logs">
+                <Terminal className="w-3 h-3 mr-1" />
+                Logs
+              </TabsTrigger>
             )}
             {!rubyCode && (
               <TabsTrigger value="logs" className="text-xs" data-testid="tab-logs">
@@ -380,10 +386,10 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
             </TabsContent>
           )}
 
-          {fileType === 'rb' && (
+          {(fileType === 'rb' || fileType === 'inp') && (
           <TabsContent value="overview" className="h-full m-0 p-4" data-testid="panel-overview">
             <ScrollArea className="h-full">
-              {rubyCode ? (
+              {rubyCode && fileType === 'rb' ? (
                 <div className="space-y-4 pr-4">
                   {aiLoading ? (
                     <Card>
@@ -406,6 +412,10 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
                       </CardContent>
                     </Card>
                   ) : null}
+                </div>
+              ) : fileType === 'inp' ? (
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                  <p>Overview not available for SWMM5 configuration files</p>
                 </div>
               ) : selectedNode ? (
                 <div className="space-y-4">
@@ -474,29 +484,37 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
           </TabsContent>
           )}
 
-          {rubyCode && fileType === 'rb' && (
+          {rubyCode && (
             <TabsContent value="nano" className="h-full m-0 p-4" data-testid="panel-nano">
               <ScrollArea className="h-full">
-                {nanoLoading ? (
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-center space-y-2 py-8">
-                        <div className="text-center space-y-2">
-                          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-                          <p className="text-sm text-muted-foreground">Explaining code...</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ) : nanoExplanation ? (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-sm">Code Explanation</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{nanoExplanation}</p>
-                    </CardContent>
-                  </Card>
+                {fileType === 'rb' ? (
+                  <>
+                    {nanoLoading ? (
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-center space-y-2 py-8">
+                            <div className="text-center space-y-2">
+                              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                              <p className="text-sm text-muted-foreground">Explaining code...</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ) : nanoExplanation ? (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-sm">Code Explanation</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{nanoExplanation}</p>
+                        </CardContent>
+                      </Card>
+                    ) : null}
+                  </>
+                ) : fileType === 'inp' ? (
+                  <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                    <p>Nano Banana explanation not available for SWMM5 configuration files</p>
+                  </div>
                 ) : null}
               </ScrollArea>
             </TabsContent>
