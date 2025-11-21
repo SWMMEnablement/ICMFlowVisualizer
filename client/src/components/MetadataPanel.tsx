@@ -111,8 +111,16 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
 
   useEffect(() => {
     if (mermaidDiagram && mermaidRef.current) {
-      mermaidRef.current.innerHTML = `<div class="mermaid">${mermaidDiagram}</div>`;
-      mermaid.run();
+      try {
+        mermaidRef.current.innerHTML = `<div class="mermaid">${mermaidDiagram}</div>`;
+        mermaid.contentLoaded();
+        mermaid.run();
+      } catch (error) {
+        console.error('Error rendering mermaid diagram:', error);
+        if (mermaidRef.current) {
+          mermaidRef.current.innerHTML = '<p class="text-xs text-muted-foreground">Failed to render diagram</p>';
+        }
+      }
     }
   }, [mermaidDiagram]);
 
