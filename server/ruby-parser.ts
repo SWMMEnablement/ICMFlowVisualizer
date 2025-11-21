@@ -18,37 +18,65 @@ export function parseRubyFile(rubyCode: string): WorkflowDefinition {
   });
   previousNodeId = 'start';
   
-  // Extract all method definitions from Ruby code
-  const methodMatches = rubyCode.matchAll(/def\s+(\w+)[^d]*?(?=\n\s*(?:def|end\s*$))/gm);
+  // Find all method definitions by looking for 'def method_name' pattern
+  const methods: Array<{ name: string; lineStart: number; lineEnd: number }> = [];
   
-  for (const match of methodMatches) {
-    const methodName = match[1];
-    const fullMethodText = match[0];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const match = line.match(/^\s*def\s+(\w+)/);
     
-    // Skip helper methods like initialize, private methods
-    if (methodName === 'initialize' || methodName.startsWith('_')) continue;
-    
-    // Skip common Ruby keywords
-    if (['new', 'class', 'module'].includes(methodName)) continue;
-    
+    if (match) {
+      const methodName = match[1];
+      
+      // Skip helper methods
+      if (methodName === 'initialize' || methodName.startsWith('_')) continue;
+      if (['new', 'class', 'module'].includes(methodName)) continue;
+      
+      // Find end of method by looking for next 'def' or 'end' at same/lower indentation
+      let lineEnd = i;
+      for (let j = i + 1; j < lines.length; j++) {
+        const nextLine = lines[j];
+        // Stop at next method definition or final 'end'
+        if (nextLine.match(/^\s*def\s+\w+/) || (j === lines.length - 1 && nextLine.trim() === 'end')) {
+          lineEnd = j - 1;
+          break;
+        }
+        // Also stop if we find a line starting with 'end' at same indentation as 'def'
+        if (nextLine.match(/^\s*end\s*$/) && nextLine.match(/^def/) === null) {
+          lineEnd = j;
+          break;
+        }
+        lineEnd = j;
+      }
+      
+      methods.push({ name: methodName, lineStart: i, lineEnd });
+    }
+  }
+  
+  // Create nodes for each method
+  for (const method of methods) {
     nodeCount++;
     const nodeId = `step_${nodeCount}`;
     
-    // Convert method name to readable title (e.g., parse_config -> Parse Config)
-    const title = methodName
+    // Convert method name to readable title
+    const title = method.name
       .split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
+    
+    // Get code snippet
+    const codeLines = lines.slice(method.lineStart, Math.min(method.lineEnd + 1, method.lineStart + 20));
+    const codeSnippet = codeLines.join('\n');
     
     nodes.push({
       id: nodeId,
       type: 'process',
       label: title,
-      description: `Method: ${methodName}`,
+      description: `Method: ${method.name}`,
       position: { x: 300, y: 100 + nodeCount * 200 },
       metadata: {
-        methodName: methodName,
-        codeSnippet: fullMethodText.substring(0, 500)
+        methodName: method.name,
+        codeSnippet: codeSnippet.substring(0, 500)
       }
     });
     
