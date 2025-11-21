@@ -15,14 +15,14 @@ export function OnboardingDialog() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const hasSeenOnboarding = localStorage.getItem("swmm-workflow-onboarding-seen");
+    const hasSeenOnboarding = localStorage.getItem("icm-ruby-workflow-onboarding-seen");
     if (!hasSeenOnboarding) {
       setOpen(true);
     }
   }, []);
 
   const handleClose = () => {
-    localStorage.setItem("swmm-workflow-onboarding-seen", "true");
+    localStorage.setItem("icm-ruby-workflow-onboarding-seen", "true");
     setOpen(false);
   };
 
@@ -38,9 +38,9 @@ export function OnboardingDialog() {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="dialog-onboarding">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-heading">Welcome to SWMM5 Batch Import Workflow</DialogTitle>
+          <DialogTitle className="text-2xl font-heading">ICM Ruby Workflow</DialogTitle>
           <DialogDescription className="text-base">
-            This diagram shows how multiple SWMM5 .inp files are batch-imported into ICM InfoWorks networks
+            Interactive analyzer for Ruby scripts that process ICM InfoWorks workflows and data
           </DialogDescription>
         </DialogHeader>
 

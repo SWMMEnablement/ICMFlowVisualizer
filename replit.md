@@ -1,12 +1,17 @@
-# ICM InfoWorks Ruby Visualizer
+# ICM Ruby Workflow
 
 ## Overview
 
-This is an interactive visualization and documentation tool for analyzing Ruby code workflows in ICM InfoWorks. The application parses Ruby files to extract workflow steps, generate visual diagrams of the process flow, and create editable markdown documentation. It allows engineers to understand Ruby script structure by visualizing the sequence of operations, identifying key steps, and automatically generating comprehensive documentation that can be customized and exported.
+This is an interactive analyzer for Ruby code workflows in ICM InfoWorks. The application parses Ruby files to extract code structure, generate detailed ASCII diagrams, and provide AI-powered analysis. It helps engineers quickly understand complex Ruby automation scripts used for batch import workflows, data processing, and system integration by visualizing code execution flow, identifying key methods and API calls, and automatically generating comprehensive explanations.
 
-The application serves as both a code analysis and documentation tool, helping engineers quickly understand complex Ruby automation scripts by parsing the source code and presenting it in an intuitive, interactive format.
+The application serves as both a code analysis and documentation tool, combining static code parsing with AI-powered insights to help engineers comprehend Ruby scripts used in ICM InfoWorks workflows.
 
 ## Recent Changes
+
+### November 21, 2025 - Project Rebranded to ICM Ruby Workflow & Diagram Formatting
+- **Rebranded project** from "Welcome to SWMM5 Batch Import Workflow" to "ICM Ruby Workflow"
+- **Unified ASCII diagram formatting** - all box widths standardized to 35 characters with consistent Unicode borders
+- **Enhanced diagram details** showing InfoWorks ICM API calls, classes, methods, data structures, control flow, file I/O, and error handling
 
 ### November 21, 2025 - Ruby Reference Files & Parser Improvements
 - **Added integrated Ruby reference documentation** accessible via "Reference" button in header

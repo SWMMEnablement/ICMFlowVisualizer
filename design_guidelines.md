@@ -1,4 +1,4 @@
-# Design Guidelines: SWMM5 Workflow Visualization Tool
+# Design Guidelines: ICM Ruby Workflow Analyzer
 
 ## Design Approach
 **Reference-Based System Hybrid**: Drawing from Lucidchart and draw.io's proven flowchart interfaces with engineering-focused aesthetics. This is a utility-first application prioritizing clarity, technical accuracy, and workflow comprehension.

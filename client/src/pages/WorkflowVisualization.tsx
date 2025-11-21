@@ -114,7 +114,7 @@ export default function WorkflowVisualization() {
           <div className="flex items-center gap-3">
             <div>
               <h1 className="text-2xl font-serif font-bold text-foreground">
-                Welcome to SWMM5 Batch Import Workflow
+                ICM Ruby Workflow
               </h1>
             </div>
             <input
