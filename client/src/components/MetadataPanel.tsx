@@ -14,6 +14,7 @@ interface MetadataPanelProps {
   selectedNode?: WorkflowNode;
   rubyCode?: string;
   fileName?: string;
+  fileType?: 'rb' | 'inp' | null;
   fileConfigs?: FileConfig[];
   statistics?: ImportStatistics;
   logs?: LogEntry[];
@@ -56,7 +57,28 @@ function analyzeRubyCode(code: string): { methods: string[]; classes: string[]; 
   return { methods, classes, summary };
 }
 
-export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', fileConfigs = [], statistics, logs = [], logsLoading, logsError }: MetadataPanelProps) {
+function parseSWMM5File(content: string): { sections: string[]; elements: Map<string, number> } {
+  const sections: string[] = [];
+  const elements = new Map<string, number>();
+  
+  const lines = content.split('\n');
+  let currentSection = '';
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      currentSection = trimmed.slice(1, -1);
+      sections.push(currentSection);
+      elements.set(currentSection, 0);
+    } else if (trimmed && currentSection && !trimmed.startsWith(';')) {
+      elements.set(currentSection, (elements.get(currentSection) || 0) + 1);
+    }
+  }
+  
+  return { sections, elements };
+}
+
+export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', fileType = null, fileConfigs = [], statistics, logs = [], logsLoading, logsError }: MetadataPanelProps) {
   const [aiOverview, setAiOverview] = useState<string>('');
   const [aiLoading, setAiLoading] = useState(false);
   const [mermaidDiagram, setMermaidDiagram] = useState<string>('');
@@ -145,7 +167,8 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
     }
   };
 
-  const analysis = rubyCode ? analyzeRubyCode(rubyCode) : null;
+  const analysis = fileType === 'rb' && rubyCode ? analyzeRubyCode(rubyCode) : null;
+  const swmm5Data = fileType === 'inp' && rubyCode ? parseSWMM5File(rubyCode) : null;
 
   const getContentToCopy = (): string => {
     switch (activeTab) {
@@ -196,33 +219,43 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
     <div className="h-full bg-card border-l border-border">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
         <div className="border-b border-border px-4 py-3 flex items-center justify-between">
-          <TabsList className="grid grid-cols-5 gap-1">
-            {rubyCode && (
+          <TabsList className={`grid ${fileType === 'inp' ? 'grid-cols-3' : 'grid-cols-5'} gap-1`}>
+            {rubyCode && fileType === 'rb' && (
               <TabsTrigger value="analysis" className="text-xs" data-testid="tab-analysis">
                 <Activity className="w-3 h-3 mr-1" />
                 Analysis
               </TabsTrigger>
             )}
+            {fileType === 'rb' && rubyCode && (
             <TabsTrigger value="overview" className="text-xs" data-testid="tab-overview">
               <Activity className="w-3 h-3 mr-1" />
               Overview
             </TabsTrigger>
-            {rubyCode && (
+            )}
+            {rubyCode && fileType === 'rb' && (
               <TabsTrigger value="nano" className="text-xs" data-testid="tab-nano">
                 <Terminal className="w-3 h-3 mr-1" />
                 Nano Banana
               </TabsTrigger>
             )}
-            {rubyCode && (
+            {rubyCode && fileType === 'rb' && (
               <TabsTrigger value="mermaid" className="text-xs" data-testid="tab-mermaid">
                 <BarChart3 className="w-3 h-3 mr-1" />
                 Diagram
               </TabsTrigger>
             )}
+            {fileType === 'inp' && (
+              <TabsTrigger value="statistics" className="text-xs" data-testid="tab-statistics">
+                <BarChart3 className="w-3 h-3 mr-1" />
+                Structure
+              </TabsTrigger>
+            )}
+            {fileType === 'rb' && (
             <TabsTrigger value="statistics" className="text-xs" data-testid="tab-statistics">
               <BarChart3 className="w-3 h-3 mr-1" />
               Stats
             </TabsTrigger>
+            )}
             {!rubyCode && (
               <TabsTrigger value="logs" className="text-xs" data-testid="tab-logs">
                 <Terminal className="w-3 h-3 mr-1" />
@@ -252,7 +285,7 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
         </div>
 
         <div className="flex-1 overflow-hidden">
-          {rubyCode && analysis && (
+          {rubyCode && fileType === 'rb' && analysis && (
             <TabsContent value="analysis" className="h-full m-0 p-4" data-testid="panel-analysis">
               <ScrollArea className="h-full">
                 <div className="space-y-4 pr-4">
@@ -335,6 +368,7 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
             </TabsContent>
           )}
 
+          {fileType === 'rb' && (
           <TabsContent value="overview" className="h-full m-0 p-4" data-testid="panel-overview">
             <ScrollArea className="h-full">
               {rubyCode ? (
@@ -426,8 +460,9 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
               )}
             </ScrollArea>
           </TabsContent>
+          )}
 
-          {rubyCode && (
+          {rubyCode && fileType === 'rb' && (
             <TabsContent value="nano" className="h-full m-0 p-4" data-testid="panel-nano">
               <ScrollArea className="h-full">
                 {nanoLoading ? (
@@ -455,7 +490,7 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
             </TabsContent>
           )}
 
-          {rubyCode && (
+          {rubyCode && fileType === 'rb' && (
             <TabsContent value="mermaid" className="h-full m-0 p-4" data-testid="panel-mermaid">
               <ScrollArea className="h-full">
                 {mermaidDiagram ? (
@@ -474,6 +509,32 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
             </TabsContent>
           )}
 
+          {fileType === 'inp' && swmm5Data && (
+            <TabsContent value="statistics" className="h-full m-0 p-4" data-testid="panel-inp-structure">
+              <ScrollArea className="h-full">
+                <div className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm">File Structure</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-xs text-muted-foreground mb-3">Total sections: <span className="font-semibold text-foreground">{swmm5Data.sections.length}</span></p>
+                      <div className="space-y-2">
+                        {swmm5Data.sections.map((section) => (
+                          <div key={section} className="flex justify-between items-center bg-muted/30 rounded px-3 py-2">
+                            <span className="font-mono text-xs text-foreground">{section}</span>
+                            <Badge variant="secondary" className="text-xs">{swmm5Data.elements.get(section) || 0}</Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </ScrollArea>
+            </TabsContent>
+          )}
+
+          {fileType === 'rb' && (
           <TabsContent value="statistics" className="h-full m-0 p-4" data-testid="panel-statistics">
             <ScrollArea className="h-full">
               {statistics ? (
@@ -556,6 +617,7 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
               )}
             </ScrollArea>
           </TabsContent>
+          )}
 
           <TabsContent value="logs" className="h-full m-0 p-0" data-testid="panel-logs">
             <ScrollArea className="h-full">

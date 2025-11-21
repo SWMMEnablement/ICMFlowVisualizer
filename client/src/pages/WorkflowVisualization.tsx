@@ -27,6 +27,7 @@ export default function WorkflowVisualization() {
   const [phaseFilter] = useState<PhaseFilter>('all');
   const [rubyCode, setRubyCode] = useState<string>('');
   const [fileName, setFileName] = useState<string>('');
+  const [fileType, setFileType] = useState<'rb' | 'inp' | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: workflowData, isLoading, error } = useQuery<WorkflowDefinition>({
@@ -64,7 +65,10 @@ export default function WorkflowVisualization() {
     const file = e.currentTarget.files?.[0];
     if (!file) return;
     
-    if (!file.name.endsWith('.rb')) {
+    const isRuby = file.name.endsWith('.rb');
+    const isINP = file.name.endsWith('.inp');
+
+    if (!isRuby && !isINP) {
       return;
     }
 
@@ -73,6 +77,7 @@ export default function WorkflowVisualization() {
       const content = event.target?.result as string;
       setRubyCode(content);
       setFileName(file.name);
+      setFileType(isRuby ? 'rb' : 'inp');
     };
     reader.readAsText(file);
   };
@@ -124,7 +129,7 @@ export default function WorkflowVisualization() {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".rb"
+              accept=".rb,.inp"
               onChange={handleFileChange}
               className="hidden"
               data-testid="input-ruby-file-header"
@@ -140,11 +145,11 @@ export default function WorkflowVisualization() {
                   data-testid="button-file-picker"
                 >
                   <Upload className="w-4 h-4 mr-2" />
-                  <span className="text-xs">Open .rb File</span>
+                  <span className="text-xs">Open File</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                Upload a Ruby script file (.rb) to analyze
+                Upload a Ruby script (.rb) or SWMM5 input file (.inp) to analyze
               </TooltipContent>
             </Tooltip>
           </div>
@@ -236,7 +241,7 @@ export default function WorkflowVisualization() {
       <div className="flex-1 flex overflow-hidden">
         <div className="w-[525px] flex-shrink-0 border-r border-border flex flex-col bg-card">
           <div className="px-4 py-3 border-b border-border">
-            <h3 className="font-semibold text-sm">Ruby Code</h3>
+            <h3 className="font-semibold text-sm">{fileType === 'inp' ? 'File Contents' : 'Ruby Code'}</h3>
             {fileName && <p className="text-xs text-muted-foreground mt-1">{fileName}</p>}
           </div>
           {rubyCode ? (
@@ -248,8 +253,8 @@ export default function WorkflowVisualization() {
           ) : (
             <div className="flex-1 flex items-center justify-center text-center px-4">
               <div className="text-muted-foreground text-sm">
-                <p className="mb-2">No Ruby file loaded</p>
-                <p className="text-xs">Click "Open .rb File" to upload a Ruby script</p>
+                <p className="mb-2">No file loaded</p>
+                <p className="text-xs">Click "Open File" to upload a Ruby script or SWMM5 input file</p>
               </div>
             </div>
           )}
@@ -261,6 +266,7 @@ export default function WorkflowVisualization() {
               selectedNode={selectedNode}
               rubyCode={rubyCode}
               fileName={fileName}
+              fileType={fileType}
               fileConfigs={workflowData.fileConfigs}
               statistics={workflowData.statistics}
               logs={logs}
