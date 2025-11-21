@@ -111,8 +111,15 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
 
   useEffect(() => {
     if (mermaidDiagram && mermaidRef.current) {
-      // ASCII diagram - just display as plain text
-      mermaidRef.current.innerHTML = `<pre className="whitespace-pre-wrap font-mono text-xs p-4">${mermaidDiagram}</pre>`;
+      // ASCII diagram - display as plain text with proper HTML escaping
+      mermaidRef.current.innerHTML = '';
+      const pre = document.createElement('pre');
+      pre.style.fontFamily = 'monospace';
+      pre.style.fontSize = '12px';
+      pre.style.whiteSpace = 'pre-wrap';
+      pre.style.overflow = 'auto';
+      pre.textContent = mermaidDiagram;
+      mermaidRef.current.appendChild(pre);
     }
   }, [mermaidDiagram]);
 
