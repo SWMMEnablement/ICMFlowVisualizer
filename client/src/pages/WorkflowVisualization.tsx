@@ -7,10 +7,11 @@ import { WorkflowStepList } from "@/components/WorkflowStepList";
 import { AIAssistant } from "@/components/AIAssistant";
 import { WorkflowCanvas } from "@/components/WorkflowCanvas";
 import { MarkdownEditor } from "@/components/MarkdownEditor";
+import { ReferenceModal } from "@/components/ReferenceModal";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Info, PanelRightClose, PanelRightOpen, List, ListCollapse, Upload, FileText } from "lucide-react";
+import { Info, PanelRightClose, PanelRightOpen, List, ListCollapse, Upload, FileText, BookOpen } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 
@@ -22,6 +23,7 @@ export default function WorkflowVisualization() {
   const [isLegendOpen, setIsLegendOpen] = useState(false);
   const [isStepListOpen, setIsStepListOpen] = useState(true);
   const [isMarkdownOpen, setIsMarkdownOpen] = useState(false);
+  const [isReferenceOpen, setIsReferenceOpen] = useState(false);
   const [phaseFilter] = useState<PhaseFilter>('all');
   const [isParsingFile, setIsParsingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -198,6 +200,15 @@ export default function WorkflowVisualization() {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => setIsReferenceOpen(true)}
+              data-testid="button-reference"
+            >
+              <BookOpen className="w-4 h-4 mr-2" />
+              Reference
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setIsPanelOpen(!isPanelOpen)}
               data-testid="button-toggle-panel"
             >
@@ -216,6 +227,8 @@ export default function WorkflowVisualization() {
           </div>
         </div>
       </header>
+
+      <ReferenceModal open={isReferenceOpen} onOpenChange={setIsReferenceOpen} />
 
       <div className="flex-1 flex overflow-hidden">
         {isStepListOpen && (
