@@ -193,7 +193,7 @@ export default function WorkflowVisualization() {
           </div>
           {rubyCode ? (
             <ScrollArea className="flex-1">
-              <pre className="p-4 text-xs font-mono text-foreground whitespace-pre-wrap break-words leading-relaxed">
+              <pre className="p-4 text-xs font-mono font-bold text-foreground whitespace-pre-wrap break-words leading-relaxed">
                 {rubyCode}
               </pre>
             </ScrollArea>
