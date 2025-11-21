@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { PanelRightClose, PanelRightOpen, Upload, FileText, BookOpen } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -125,54 +126,77 @@ export default function WorkflowVisualization() {
               className="hidden"
               data-testid="input-ruby-file-header"
             />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                fileInputRef.current?.click();
-              }}
-              data-testid="button-file-picker"
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              <span className="text-xs">Open .rb File</span>
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    fileInputRef.current?.click();
+                  }}
+                  data-testid="button-file-picker"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  <span className="text-xs">Open .rb File</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                Upload a Ruby script file (.rb) to analyze
+              </TooltipContent>
+            </Tooltip>
           </div>
 
 
           <div className="flex gap-2">
             <AIAssistant selectedNode={selectedNode} />
             <Sheet open={isMarkdownOpen} onOpenChange={setIsMarkdownOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="sm" data-testid="button-markdown">
-                  <FileText className="w-4 h-4 mr-2" />
-                  Documentation
-                </Button>
-              </SheetTrigger>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="sm" data-testid="button-markdown">
+                      <FileText className="w-4 h-4 mr-2" />
+                      Documentation
+                    </Button>
+                  </SheetTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  Edit and save documentation for this workflow
+                </TooltipContent>
+              </Tooltip>
               <SheetContent side="right" className="w-[500px] sm:w-[640px]">
                 <MarkdownEditor />
               </SheetContent>
             </Sheet>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsReferenceOpen(true)}
-              data-testid="button-reference"
-            >
-              <BookOpen className="w-4 h-4 mr-2" />
-              Reference
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsPanelOpen(!isPanelOpen)}
-              data-testid="button-toggle-panel"
-            >
-              {isPanelOpen ? (
-                <>
-                  <PanelRightClose className="w-4 h-4 mr-2" />
-                  Hide Panel
-                </>
-              ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsReferenceOpen(true)}
+                  data-testid="button-reference"
+                >
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  Reference
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                Browse Ruby API reference and ICM InfoWorks documentation
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsPanelOpen(!isPanelOpen)}
+                  data-testid="button-toggle-panel"
+                >
+                  {isPanelOpen ? (
+                    <>
+                      <PanelRightClose className="w-4 h-4 mr-2" />
+                      Hide Panel
+                    </>
+                  ) : (
                 <>
                   <PanelRightOpen className="w-4 h-4 mr-2" />
                   Show Panel
