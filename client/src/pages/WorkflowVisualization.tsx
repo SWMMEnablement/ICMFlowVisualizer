@@ -163,7 +163,7 @@ export default function WorkflowVisualization() {
           <div className="flex items-center gap-3">
             <div>
               <h1 className="text-2xl font-serif font-bold text-foreground">
-                ICM Ruby Workflow
+                ICM Ruby to Nano Banana
               </h1>
             </div>
             <input
