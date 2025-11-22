@@ -337,13 +337,13 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
                 Analysis
               </TabsTrigger>
             )}
-            {rubyCode && (
+            {(rubyCode || multipleFiles.length > 0) && (
             <TabsTrigger value="overview" className="text-xs" data-testid="tab-overview">
               <Activity className="w-3 h-3 mr-1" />
               Overview
             </TabsTrigger>
             )}
-            {rubyCode && (
+            {(rubyCode || multipleFiles.length > 0) && fileType === 'rb' && (
               <TabsTrigger value="nano" className="text-xs" data-testid="tab-nano">
                 <Terminal className="w-3 h-3 mr-1" />
                 Nano Banana
@@ -373,7 +373,7 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
                 Logs
               </TabsTrigger>
             )}
-            {!rubyCode && (
+            {!rubyCode && multipleFiles.length === 0 && (
               <TabsTrigger value="logs" className="text-xs" data-testid="tab-logs">
                 <Terminal className="w-3 h-3 mr-1" />
                 Logs
