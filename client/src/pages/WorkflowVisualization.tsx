@@ -185,7 +185,7 @@ export default function WorkflowVisualization() {
             <input
               ref={folderInputRef}
               type="file"
-              webkitdirectory
+              webkitdirectory=""
               onChange={handleFolderChange}
               className="hidden"
               data-testid="input-folder-header"
