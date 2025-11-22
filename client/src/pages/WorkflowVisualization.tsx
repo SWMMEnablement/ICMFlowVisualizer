@@ -19,6 +19,11 @@ import { queryClient } from "@/lib/queryClient";
 type PhaseFilter = 'all';
 
 export default function WorkflowVisualization() {
+  interface FileData {
+    fileName: string;
+    content: string;
+  }
+
   const [selectedNode, setSelectedNode] = useState<WorkflowNode | undefined>();
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [isMarkdownOpen, setIsMarkdownOpen] = useState(false);
@@ -28,8 +33,10 @@ export default function WorkflowVisualization() {
   const [rubyCode, setRubyCode] = useState<string>('');
   const [fileName, setFileName] = useState<string>('');
   const [fileType, setFileType] = useState<'rb' | 'inp' | null>(null);
+  const [multipleFiles, setMultipleFiles] = useState<FileData[]>([]);
   const rubyFileInputRef = useRef<HTMLInputElement | null>(null);
   const inpFileInputRef = useRef<HTMLInputElement | null>(null);
+  const folderInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: workflowData, isLoading, error } = useQuery<WorkflowDefinition>({
     queryKey: ['/api/workflow'],
@@ -79,8 +86,40 @@ export default function WorkflowVisualization() {
       setRubyCode(content);
       setFileName(file.name);
       setFileType(isRuby ? 'rb' : 'inp');
+      setMultipleFiles([]);
     };
     reader.readAsText(file);
+  };
+
+  const handleFolderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.currentTarget.files;
+    if (!files) return;
+
+    const rubyFiles: FileData[] = [];
+    let filesProcessed = 0;
+
+    Array.from(files).forEach((file) => {
+      if (file.name.endsWith('.rb')) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const content = event.target?.result as string;
+          rubyFiles.push({
+            fileName: file.name,
+            content: content
+          });
+          filesProcessed++;
+
+          if (filesProcessed === Array.from(files).filter(f => f.name.endsWith('.rb')).length) {
+            rubyFiles.sort((a, b) => a.fileName.localeCompare(b.fileName));
+            setMultipleFiles(rubyFiles);
+            setRubyCode('');
+            setFileName('');
+            setFileType('rb');
+          }
+        };
+        reader.readAsText(file);
+      }
+    });
   };
 
   if (isLoading) {
@@ -143,6 +182,14 @@ export default function WorkflowVisualization() {
               className="hidden"
               data-testid="input-inp-file-header"
             />
+            <input
+              ref={folderInputRef}
+              type="file"
+              webkitdirectory
+              onChange={handleFolderChange}
+              className="hidden"
+              data-testid="input-folder-header"
+            />
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -159,6 +206,24 @@ export default function WorkflowVisualization() {
               </TooltipTrigger>
               <TooltipContent side="bottom">
                 Upload a Ruby script file (.rb) to analyze
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    folderInputRef.current?.click();
+                  }}
+                  data-testid="button-open-folder"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  <span className="text-xs">Open Folder</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                Upload a folder containing multiple Ruby files (.rb)
               </TooltipContent>
             </Tooltip>
             <Tooltip>
@@ -268,20 +333,34 @@ export default function WorkflowVisualization() {
       <div className="flex-1 flex overflow-hidden">
         <div className="w-[525px] flex-shrink-0 border-r border-border flex flex-col bg-card">
           <div className="px-4 py-3 border-b border-border">
-            <h3 className="font-semibold text-sm">{fileType === 'inp' ? 'File Contents' : 'Ruby Code'}</h3>
-            {fileName && <p className="text-xs text-muted-foreground mt-1">{fileName}</p>}
+            <h3 className="font-semibold text-sm">{fileType === 'inp' ? 'File Contents' : 'Ruby Code'}{multipleFiles.length > 0 && <span className="text-xs text-muted-foreground ml-2">({multipleFiles.length} files)</span>}</h3>
           </div>
-          {rubyCode ? (
+          {rubyCode || multipleFiles.length > 0 ? (
             <ScrollArea className="flex-1">
-              <pre className="p-4 text-xs font-mono font-bold text-foreground whitespace-pre-wrap break-words leading-relaxed">
-                {rubyCode}
-              </pre>
+              {multipleFiles.length > 0 ? (
+                <div className="p-4 space-y-6">
+                  {multipleFiles.map((file, idx) => (
+                    <div key={idx}>
+                      <div className="mb-2 pb-2 border-b border-border">
+                        <p className="font-semibold text-xs text-primary">{file.fileName}</p>
+                      </div>
+                      <pre className="text-xs font-mono font-bold text-foreground whitespace-pre-wrap break-words leading-relaxed">
+                        {file.content}
+                      </pre>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <pre className="p-4 text-xs font-mono font-bold text-foreground whitespace-pre-wrap break-words leading-relaxed">
+                  {rubyCode}
+                </pre>
+              )}
             </ScrollArea>
           ) : (
             <div className="flex-1 flex items-center justify-center text-center px-4">
               <div className="text-muted-foreground text-sm">
                 <p className="mb-2">No file loaded</p>
-                <p className="text-xs">Click "Open File" to upload a Ruby script or SWMM5 input file</p>
+                <p className="text-xs">Click "Open .rb", "Open Folder" or "Open .inp" to upload files</p>
               </div>
             </div>
           )}
@@ -294,6 +373,7 @@ export default function WorkflowVisualization() {
               rubyCode={rubyCode}
               fileName={fileName}
               fileType={fileType}
+              multipleFiles={multipleFiles}
               fileConfigs={workflowData.fileConfigs}
               statistics={workflowData.statistics}
               logs={logs}

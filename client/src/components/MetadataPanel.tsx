@@ -10,11 +10,17 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect, useRef } from "react";
 import mermaid from "mermaid";
 
+interface FileData {
+  fileName: string;
+  content: string;
+}
+
 interface MetadataPanelProps {
   selectedNode?: WorkflowNode;
   rubyCode?: string;
   fileName?: string;
   fileType?: 'rb' | 'inp' | null;
+  multipleFiles?: FileData[];
   fileConfigs?: FileConfig[];
   statistics?: ImportStatistics;
   logs?: LogEntry[];
@@ -78,7 +84,7 @@ function parseSWMM5File(content: string): { sections: string[]; elements: Map<st
   return { sections, elements };
 }
 
-export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', fileType = null, fileConfigs = [], statistics, logs = [], logsLoading, logsError }: MetadataPanelProps) {
+export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', fileType = null, multipleFiles = [], fileConfigs = [], statistics, logs = [], logsLoading, logsError }: MetadataPanelProps) {
   const [aiOverview, setAiOverview] = useState<string>('');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string>('');
@@ -86,6 +92,10 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
   const [nanoExplanation, setNanoExplanation] = useState<string>('');
   const [nanoLoading, setNanoLoading] = useState(false);
   const [nanoError, setNanoError] = useState<string>('');
+  const [multiFileOverviews, setMultiFileOverviews] = useState<Map<string, string>>(new Map());
+  const [multiFileNanoBananas, setMultiFileNanoBananas] = useState<Map<string, string>>(new Map());
+  const [multiFileLoading, setMultiFileLoading] = useState(false);
+  const [multiFileError, setMultiFileError] = useState<string>('');
   const [activeTab, setActiveTab] = useState<string>(() => {
     if (fileType === 'rb' && rubyCode) return 'analysis';
     if (fileType === 'inp' && rubyCode) return 'statistics';
@@ -186,6 +196,71 @@ export function MetadataPanel({ selectedNode, rubyCode = '', fileName = '', file
         });
     }
   }, [rubyCode, fileType]);
+
+  // Handle multiple files analysis
+  useEffect(() => {
+    if (multipleFiles.length > 0) {
+      setMultiFileLoading(true);
+      setMultiFileError('');
+      const overviews = new Map<string, string>();
+      const nanoBananas = new Map<string, string>();
+      let processedCount = 0;
+
+      multipleFiles.forEach((file) => {
+        // Get overview for each file
+        fetch('/api/ai-analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: file.content, context: 'detailed overview' })
+        })
+          .then(res => res.json())
+          .then(data => {
+            overviews.set(file.fileName, data.analysis || '');
+            processedCount++;
+            if (processedCount === multipleFiles.length * 2) {
+              setMultiFileOverviews(overviews);
+              setMultiFileNanoBananas(nanoBananas);
+              setMultiFileLoading(false);
+            }
+          })
+          .catch(error => {
+            console.error('Error fetching overview:', error);
+            processedCount++;
+            if (processedCount === multipleFiles.length * 2) {
+              setMultiFileOverviews(overviews);
+              setMultiFileNanoBananas(nanoBananas);
+              setMultiFileLoading(false);
+            }
+          });
+
+        // Get nano banana for each file
+        fetch('/api/nano-explain', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: file.content, elementCount: 0, fileType: 'rb' })
+        })
+          .then(res => res.json())
+          .then(data => {
+            nanoBananas.set(file.fileName, data.explanation || '');
+            processedCount++;
+            if (processedCount === multipleFiles.length * 2) {
+              setMultiFileOverviews(overviews);
+              setMultiFileNanoBananas(nanoBananas);
+              setMultiFileLoading(false);
+            }
+          })
+          .catch(error => {
+            console.error('Error fetching nano banana:', error);
+            processedCount++;
+            if (processedCount === multipleFiles.length * 2) {
+              setMultiFileOverviews(overviews);
+              setMultiFileNanoBananas(nanoBananas);
+              setMultiFileLoading(false);
+            }
+          });
+      });
+    }
+  }, [multipleFiles]);
 
   const getStatusBadge = (status?: string) => {
     switch (status) {
@@ -413,49 +488,91 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
           {(fileType === 'rb' || fileType === 'inp') && (
           <TabsContent value="overview" className="h-full m-0 p-4" data-testid="panel-overview">
             <ScrollArea className="h-full">
-              {rubyCode ? (
+              {rubyCode || multipleFiles.length > 0 ? (
                 <div className="space-y-4 pr-4">
-                  {fileType === 'inp' && swmm5Data && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-sm">File Summary</CardTitle>
-                      </CardHeader>
-                      <CardContent className="text-xs text-muted-foreground space-y-2">
-                        <p>• <span className="font-semibold text-foreground">{swmm5Data.sections.length}</span> section{swmm5Data.sections.length !== 1 ? 's' : ''}</p>
-                        <p>• <span className="font-semibold text-foreground">{elementCount}</span> total element{elementCount !== 1 ? 's' : ''}</p>
-                      </CardContent>
-                    </Card>
-                  )}
-                  {aiLoading ? (
-                    <Card>
-                      <CardContent className="pt-6">
-                        <div className="flex items-center justify-center space-y-2 py-8">
-                          <div className="text-center space-y-2">
-                            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-                            <p className="text-sm text-muted-foreground">Analyzing with AI...</p>
+                  {multipleFiles.length > 0 ? (
+                    <>
+                      {multiFileLoading ? (
+                        <Card>
+                          <CardContent className="pt-6">
+                            <div className="flex items-center justify-center space-y-2 py-8">
+                              <div className="text-center space-y-2">
+                                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                                <p className="text-sm text-muted-foreground">Analyzing {multipleFiles.length} files with AI...</p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ) : multiFileError ? (
+                        <Card>
+                          <CardContent className="pt-6">
+                            <div className="text-center space-y-2">
+                              <p className="text-sm text-destructive">Error: {multiFileError}</p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ) : (
+                        multipleFiles.map((file) => (
+                          <div key={file.fileName} className="space-y-2">
+                            <div className="pb-2 border-b border-border">
+                              <p className="font-semibold text-xs text-primary">{file.fileName}</p>
+                            </div>
+                            <Card>
+                              <CardContent className="pt-4">
+                                <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                                  {multiFileOverviews.get(file.fileName) || 'Generating summary...'}
+                                </p>
+                              </CardContent>
+                            </Card>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ) : aiError ? (
-                    <Card>
-                      <CardContent className="pt-6">
-                        <div className="text-center space-y-2">
-                          <p className="text-sm text-destructive">Unable to analyze: {aiError}</p>
-                          <p className="text-xs text-muted-foreground">AI service may be temporarily unavailable. Try again in a moment.</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ) : aiOverview ? (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-sm">{fileType === 'rb' ? 'Code' : 'File'} Overview</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-primary font-bold leading-relaxed whitespace-pre-wrap">{aiOverview}</p>
-                      </CardContent>
-                    </Card>
-                  ) : null}
+                        ))
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {fileType === 'inp' && swmm5Data && (
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-sm">File Summary</CardTitle>
+                          </CardHeader>
+                          <CardContent className="text-xs text-muted-foreground space-y-2">
+                            <p>• <span className="font-semibold text-foreground">{swmm5Data.sections.length}</span> section{swmm5Data.sections.length !== 1 ? 's' : ''}</p>
+                            <p>• <span className="font-semibold text-foreground">{elementCount}</span> total element{elementCount !== 1 ? 's' : ''}</p>
+                          </CardContent>
+                        </Card>
+                      )}
+                      {aiLoading ? (
+                        <Card>
+                          <CardContent className="pt-6">
+                            <div className="flex items-center justify-center space-y-2 py-8">
+                              <div className="text-center space-y-2">
+                                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                                <p className="text-sm text-muted-foreground">Analyzing with AI...</p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ) : aiError ? (
+                        <Card>
+                          <CardContent className="pt-6">
+                            <div className="text-center space-y-2">
+                              <p className="text-sm text-destructive">Unable to analyze: {aiError}</p>
+                              <p className="text-xs text-muted-foreground">AI service may be temporarily unavailable. Try again in a moment.</p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ) : aiOverview ? (
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-sm">{fileType === 'rb' ? 'Code' : 'File'} Overview</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-sm text-primary font-bold leading-relaxed whitespace-pre-wrap">{aiOverview}</p>
+                          </CardContent>
+                        </Card>
+                      ) : null}
+                    </>
+                  )}
                 </div>
               ) : selectedNode ? (
                 <div className="space-y-4">
@@ -524,39 +641,75 @@ Label Lists Deleted: ${statistics.totalLabelListsDeleted}`;
           </TabsContent>
           )}
 
-          {rubyCode && fileType === 'rb' && (
+          {(rubyCode || multipleFiles.length > 0) && fileType === 'rb' && (
             <TabsContent value="nano" className="h-full m-0 p-4" data-testid="panel-nano">
               <ScrollArea className="h-full">
-                {nanoLoading ? (
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-center space-y-2 py-8">
-                        <div className="text-center space-y-2">
-                          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-                          <p className="text-sm text-muted-foreground">Analyzing with AI...</p>
-                        </div>
+                {multipleFiles.length > 0 ? (
+                  <>
+                    {multiFileLoading ? (
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-center space-y-2 py-8">
+                            <div className="text-center space-y-2">
+                              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                              <p className="text-sm text-muted-foreground">Generating Nano Banana for {multipleFiles.length} files...</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <div className="space-y-4 pr-4">
+                        {multipleFiles.map((file) => (
+                          <div key={file.fileName} className="space-y-2">
+                            <div className="pb-2 border-b border-border">
+                              <p className="font-semibold text-xs text-primary">{file.fileName}</p>
+                            </div>
+                            <Card>
+                              <CardContent className="pt-4">
+                                <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                                  {multiFileNanoBananas.get(file.fileName) || 'Generating explanation...'}
+                                </p>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        ))}
                       </div>
-                    </CardContent>
-                  </Card>
-                ) : nanoError ? (
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center space-y-2">
-                        <p className="text-sm text-destructive">Unable to generate explanation: {nanoError}</p>
-                        <p className="text-xs text-muted-foreground">AI service may be temporarily unavailable. Try again in a moment.</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ) : nanoExplanation ? (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-sm">Detailed Explanation</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{nanoExplanation}</p>
-                    </CardContent>
-                  </Card>
-                ) : null}
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {nanoLoading ? (
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-center space-y-2 py-8">
+                            <div className="text-center space-y-2">
+                              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                              <p className="text-sm text-muted-foreground">Analyzing with AI...</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ) : nanoError ? (
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="text-center space-y-2">
+                            <p className="text-sm text-destructive">Unable to generate explanation: {nanoError}</p>
+                            <p className="text-xs text-muted-foreground">AI service may be temporarily unavailable. Try again in a moment.</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ) : nanoExplanation ? (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-sm">Detailed Explanation</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{nanoExplanation}</p>
+                        </CardContent>
+                      </Card>
+                    ) : null}
+                  </>
+                )}
               </ScrollArea>
             </TabsContent>
           )}
