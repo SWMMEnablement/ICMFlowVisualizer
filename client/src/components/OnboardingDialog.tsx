@@ -38,7 +38,7 @@ export function OnboardingDialog() {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="dialog-onboarding">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-heading">ICM Ruby to Nano Banana</DialogTitle>
+          <DialogTitle className="text-2xl font-heading">ICM Ruby to Nano Banana Prompt</DialogTitle>
           <DialogDescription className="text-base">
             Interactive analyzer for Ruby scripts that process ICM InfoWorks workflows and data
           </DialogDescription>
