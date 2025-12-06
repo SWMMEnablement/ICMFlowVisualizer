@@ -1,34 +1,39 @@
 # Design Guidelines: ICM Ruby to Nano Banana Prompt
 
 ## Design Approach
-**Playful Technical Analyzer with Banana Identity**: Combining the precision of technical workflow analysis with a warm, inviting banana/yellow color palette. The "Nano Banana" theme brings personality to code analysis while maintaining professional clarity and engineering credibility.
+**Playful Technical Analyzer with Banana Identity & Light Blue Canvas**: Combining the precision of technical workflow analysis with a warm banana yellow accent palette set against a serene light blue background. The "Nano Banana" theme brings personality to code analysis while the light blue creates a calming, focused environment for engineers.
 
 ## Core Design Principles
 1. **Technical Clarity**: Every visual element serves the purpose of code understanding and workflow visualization
-2. **Warm, Approachable Design**: Yellow/banana colors convey friendliness and clarity without sacrificing professionalism
-3. **Information Hierarchy**: Critical elements (code analysis, Nano Banana breakdown, diagrams) are visually prominent
-4. **Playful Precision**: Combines personality with technical accuracy
-5. **Accessibility-First**: High contrast yellow tones ensure readability for all users
+2. **Calming Blue Canvas**: Light blue background reduces eye strain and creates a focused work environment
+3. **Warm Yellow Accents**: Banana yellow interactive elements pop against the blue background
+4. **Information Hierarchy**: Critical elements (code analysis, Nano Banana breakdown, diagrams) stand out with banana yellow
+5. **Accessibility-First**: High contrast between light blue and dark text, plus yellow buttons for clear interaction affordance
 
 ---
 
-## Color System - Nano Banana Theme
+## Color System - Nano Banana with Light Blue Background
 
 **Primary Yellow/Gold**: `hsl(45 96% 56%)` - Vibrant, warm yellow for primary actions, buttons, and interactive elements
 **Secondary Orange**: `hsl(38 88% 50%)` - Warm orange tone for secondary actions and accents
 **Accent Gold**: `hsl(50 100% 60%)` - Bright golden yellow for highlights and focus states
-**Background**: Clean light neutral with warm undertones in light mode; dark with warm accents in dark mode
-**Text**: High contrast dark on light, light on dark for accessibility
+
+**Background Palette - Light Blue**:
+- **Main Background**: `hsl(210 30% 93%)` - Soft light blue, calming and focused
+- **Card Background**: `hsl(210 20% 98%)` - Very light blue-tinted white for cards
+- **Sidebar**: `hsl(210 25% 88%)` - Slightly deeper light blue for navigation areas
+- **Borders**: `hsl(210 25% 80%)` - Light blue borders with adequate contrast
 
 **Light Mode**:
-- Background: `hsl(210 20% 98%)` (clean white with slight cool undertone for contrast)
-- Card: `hsl(0 0% 100%)` (pure white for clarity)
-- Borders: `hsl(45 95% 85%)` (soft warm gold borders)
+- Background: `hsl(210 30% 93%)` (soft light blue)
+- Card: `hsl(210 20% 98%)` (subtle blue-tinted white)
+- Borders: `hsl(210 25% 80%)` (light blue borders)
+- Muted: `hsl(210 20% 90%)` (light blue muted areas)
 
 **Dark Mode**:
 - Background: `hsl(215 20% 12%)` (dark base)
 - Card: `hsl(215 18% 16%)` (dark cards)
-- Borders: `hsl(215 15% 22%)` (dark borders with banana highlights)
+- Borders: `hsl(215 15% 22%)` (dark borders)
 
 **Semantic Colors**:
 - Destructive/Error: `hsl(0 65% 58%)` - Red (for critical warnings)
@@ -98,12 +103,12 @@
 **Code Viewer**: 525px fixed width
 - Syntax highlighting with yellow accents for important elements
 - Monospace font (Source Code Pro)
-- Scrollable content area
+- Scrollable content area with light blue background
 - File name header in banana yellow
 
 ### Analysis Panels (Right)
 
-**Overview Tab**: AI-generated summary with yellow accent highlights
+**Overview Tab**: AI-generated summary with yellow accent highlights against light blue background
 **Nano Banana Tab**: Structured prompt breakdown with banana yellow section headers
 **Diagram Tab**: ASCII flowchart with yellow node styling
 **Stats Tab**: Code metrics with banana yellow accent numbers
@@ -111,7 +116,7 @@
 ### Visual States & Feedback
 
 **Processing States**:
-- Pending: Soft gold border (primary)
+- Pending: Soft gold border (primary) on light blue background
 - Processing: Pulsing yellow animation
 - Success: Green (#38A169) with checkmark
 - Error: Red (#E53E3E) with X icon
@@ -142,6 +147,7 @@
 - Focus indicators: 2px solid golden outline on focused elements
 - ARIA labels for all buttons and interactive components
 - High contrast ratios: Banana yellow meets WCAG AA standards with dark text
+- Light blue background reduces eye strain during extended analysis sessions
 - Zoom controls accessible via keyboard shortcuts
 
 ---
@@ -176,13 +182,14 @@
 
 ---
 
-## Nano Banana Identity
+## Nano Banana + Light Blue Identity
 
-The banana yellow theme creates a distinctive, memorable visual identity that:
-- Differentiates the tool from generic code analyzers
-- Makes the interface feel approachable and less intimidating
-- Reinforces the brand name throughout the user experience
-- Maintains professionalism while celebrating the playful "Nano Banana" concept
+The banana yellow + light blue combination creates:
+- A distinctive, memorable visual identity unique to the tool
+- Warm interactive elements that feel approachable and inviting
+- A calming blue canvas that reduces eye strain during extended code analysis
+- Professional credibility balanced with playful personality
+- Strong contrast that guides user attention to interactive banana yellow elements
 
 ---
 
