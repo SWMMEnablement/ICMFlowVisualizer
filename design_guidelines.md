@@ -1,13 +1,46 @@
-# Design Guidelines: ICM Ruby Workflow Analyzer
+# Design Guidelines: ICM Ruby to Nano Banana Prompt
 
 ## Design Approach
-**Reference-Based System Hybrid**: Drawing from Lucidchart and draw.io's proven flowchart interfaces with engineering-focused aesthetics. This is a utility-first application prioritizing clarity, technical accuracy, and workflow comprehension.
+**Reference-Based System Hybrid**: Drawing from Lucidchart and draw.io's proven flowchart interfaces with engineering-focused aesthetics and a vibrant blue color system. This is a utility-first application prioritizing clarity, technical accuracy, and workflow comprehension.
 
 ## Core Design Principles
-1. **Technical Clarity**: Every visual element serves the purpose of workflow understanding
-2. **Information Hierarchy**: Critical path elements (UI → Exchange → Database) are visually dominant
-3. **Scannable Structure**: Users should instantly identify process stages and file relationships
-4. **Engineering Professionalism**: Clean, precise, and authoritative visual language
+1. **Technical Clarity**: Every visual element serves the purpose of code understanding and workflow visualization
+2. **Blue-Forward Identity**: A vibrant blue color scheme conveys technical precision and professionalism
+3. **Information Hierarchy**: Critical elements (code analysis, Nano Banana breakdown, diagrams) are visually prominent
+4. **Scannable Structure**: Users instantly identify analysis tabs and code structure relationships
+5. **Engineering Professionalism**: Clean, precise, and authoritative visual language
+
+---
+
+## Color System - Blue Theme
+
+**Primary Blue**: `hsl(210 100% 40%)` - Vibrant, technical blue for primary actions, buttons, and interactive elements
+**Secondary Blue**: `hsl(200 80% 35%)` - Darker blue tone for secondary actions and accents
+**Accent Blue**: `hsl(200 95% 45%)` - Bright blue accent for highlights and focus states
+**Background**: Light neutral with subtle blue undertones in light mode; dark blue-tinted in dark mode
+**Text**: High contrast dark on light, light on dark for accessibility
+
+**Light Mode**:
+- Background: `hsl(210 20% 98%)`
+- Card: `hsl(0 0% 100%)` (pure white for clarity)
+- Borders: `hsl(210 15% 88%)` (subtle blue-tinted grey)
+
+**Dark Mode**:
+- Background: `hsl(215 20% 12%)` (dark blue-tinted)
+- Card: `hsl(215 18% 16%)` (dark with blue undertone)
+- Borders: `hsl(215 15% 22%)` (blue-tinted dark borders)
+
+**Semantic Colors**:
+- Destructive/Error: `hsl(0 65% 58%)` - Red (unchanged for clarity)
+- Warning: `hsl(38 92% 50%)` - Amber (unchanged for clarity)
+- Secondary Success: `hsl(142 71% 45%)` → Blue accent in visualizations
+
+**Chart Colors** (all blue family):
+- Chart 1: `hsl(210 100% 40%)` - Primary blue
+- Chart 2: `hsl(200 80% 35%)` - Secondary blue
+- Chart 3: `hsl(210 60% 50%)` - Medium blue
+- Chart 4: `hsl(200 70% 55%)` - Light blue
+- Chart 5: `hsl(210 80% 60%)` - Lighter blue
 
 ---
 
@@ -18,8 +51,8 @@
 **Display Font**: Inter (for headings, section titles)
 
 **Type Scale**:
-- H1 (Page Title): Inter, 32px, 700 weight
-- H2 (Section Headers): Inter, 24px, 600 weight  
+- H1 (Page Title): Inter, 32px, 700 weight - Blue primary color
+- H2 (Section Headers): Inter, 24px, 600 weight
 - H3 (Component Labels): Roboto, 18px, 500 weight
 - Body Text: Roboto, 14px, 400 weight
 - Code/Technical: Source Code Pro, 13px, 400 weight
@@ -32,12 +65,12 @@
 **Spacing Units**: Use Tailwind units of 4, 6, 8, 12, and 20 for consistent rhythm
 - Component padding: p-4 to p-6
 - Section spacing: mb-8, mt-12
-- Canvas margins: p-20
+- Content margins: p-6 to p-8
 - Icon-to-text gaps: gap-2
 
 **Grid Structure**:
-- Main canvas area:占据 70-75% viewport width
-- Side panel (metadata): 25-30% width
+- Code panel (left): 525px fixed width
+- Analysis panel (right): Flexible, responsive
 - Responsive breakpoint: Stack vertically on md and below
 
 ---
@@ -45,98 +78,109 @@
 ## Component Library
 
 ### Navigation & Controls
-**Top Toolbar**: Fixed header with controls (Zoom In/Out, Reset View, Export, Legend Toggle)
+**Top Header**: Fixed header with title and action buttons
 - Height: 64px
-- Horizontal layout with icon buttons
-- Subtle shadow for elevation
+- Blue primary background in light mode, blue-tinted dark in dark mode
+- White text for maximum contrast
+- Action buttons use primary blue accent
 
-**Side Panel**: Collapsible metadata and statistics panel
-- Tabbed interface (Overview, Files, Statistics, Logs)
-- Smooth slide-in/out animation
+**File Upload Controls**: 
+- Buttons styled with primary blue theme
+- Icons from Lucide (no emojis)
+- Hover state: Subtle elevation with blue accent
 
-### Visualization Components
+**Tabs**: For switching between Analysis, Overview, Nano Banana, Diagram, Stats
+- Active tab: Blue primary color underline/background
+- Inactive tabs: Muted foreground color
+- Smooth transitions between states
 
-**Flowchart Nodes**:
-- **Process Rectangles**: Rounded corners (8px), 180px min-width, 60px height
-- **Decision Diamonds**: 150px width, 90px height
-- **Data/File Boxes**: Parallelogram shape, 160px width
-- **Terminal Shapes**: Rounded pill (24px border-radius)
+### Code Display Panel (Left)
+**Code Viewer**: 525px fixed width
+- Syntax highlighting with blue accents for important elements
+- Monospace font (Source Code Pro)
+- Scrollable content area
+- File name header in primary blue
 
-**Connector Lines**:
-- Stroke width: 2px for primary flow, 1px for secondary relationships
-- Use orthogonal (right-angle) connectors, not curved
-- Arrowheads: Solid triangles, 8px size
-- Dashed lines (4px dash, 4px gap) for optional/conditional paths
+### Analysis Panels (Right)
 
-**Interactive Elements**:
-- Nodes: Clickable with hover state (subtle scale: 1.02)
-- Tooltips: Appear on hover with file details, 200ms delay
-- Highlight: Connected paths illuminate on node selection
+**Overview Tab**: AI-generated summary with blue accent highlights
+**Nano Banana Tab**: Structured prompt breakdown with blue section headers
+**Diagram Tab**: ASCII flowchart with blue node styling
+**Stats Tab**: Code metrics with blue accent numbers
 
-### Data Display
-
-**File Cards**: Display .inp file information
-- Card layout: 320px width, auto height
-- Include: filename, size, status badge, timestamp
-- Status badges: Pill-shaped, 6px padding, uppercase text
-
-**Statistics Dashboard**: Key metrics grid
-- 4-column grid on desktop (2 on tablet, 1 on mobile)
-- Large numbers (28px) with descriptive labels below
-- Icon accompaniment for each metric
-
-**Log Viewer**: Monospace text display
-- Background: Subtle grey (#F9FAFB)
-- Max height: 400px with scroll
-- Line numbers in left gutter
-- Syntax highlighting for ERROR/WARNING/SUCCESS
-
----
-
-## Visual States & Feedback
+### Visual States & Feedback
 
 **Processing States**:
-- Pending: Grey outline (#CBD5E0)
-- Processing: Pulsing animation, process green border
-- Success: Solid green (#38A169) with checkmark icon
+- Pending: Blue-tinted border (primary)
+- Processing: Pulsing blue animation
+- Success: Green (#38A169) with checkmark
 - Error: Red (#E53E3E) with X icon
 - Warning: Amber (#D69E2E) with alert icon
 
-**Canvas Interactions**:
-- Pan: Click-drag with hand cursor
-- Zoom: Mouse wheel or toolbar controls (50%-200% range)
-- Select: Click nodes for details in side panel
+**Interactive Feedback**:
+- Buttons: Blue primary background, white text
+- Hover state: Slightly elevated with enhanced saturation
+- Focus state: Blue ring outline for keyboard navigation
+- Disabled state: Muted blue with reduced opacity
 
 ---
 
 ## Animations
 
 **Minimal, Purposeful Motion**:
-- Node hover: Transform scale (100ms ease-out)
+- Button hover: Subtle elevation (100ms)
+- Tab transitions: Smooth color change (200ms)
 - Panel slide: 300ms cubic-bezier transition
-- Path highlighting: 200ms color transition
+- Loading indicators: Continuous blue pulse animation
 - No auto-playing animations on load
 
 ---
 
 ## Accessibility
 
-- Keyboard navigation: Tab through nodes, Enter to select
-- Focus indicators: 2px solid outline on focused elements
-- ARIA labels for all flowchart nodes and controls
-- Sufficient color contrast ratios (WCAG AA minimum)
-- Zoom controls accessible via keyboard shortcuts (+/-)
+- Keyboard navigation: Tab through interactive elements
+- Focus indicators: 2px solid blue outline on focused elements
+- ARIA labels for all buttons and interactive components
+- High contrast ratios: Blue primary meets WCAG AA standards
+- Zoom controls accessible via keyboard shortcuts
 
 ---
 
 ## Responsive Considerations
 
-**Desktop (lg+)**: Full side-by-side layout with zoomable canvas
-**Tablet (md)**: Collapsible side panel, canvas takes 100% when expanded
-**Mobile (base)**: Stack vertically, simplified flowchart with expandable details
+**Desktop (lg+)**: Two-column layout (code left, analysis right)
+**Tablet (md)**: Collapsible panels with responsive tabs
+**Mobile (base)**: Stack vertically, simplified interface
 
 ---
 
-## Images
+## Visual Hierarchy
 
-No photographic imagery required. This is a technical diagram interface. All visuals are SVG-based flowchart elements, icons (Heroicons for UI controls), and data visualizations.
+**Primary Elements** (use primary blue):
+- Main heading: "ICM Ruby to Nano Banana Prompt"
+- Active tabs
+- Primary action buttons
+- Important code annotations
+
+**Secondary Elements** (use secondary blue):
+- Tab labels
+- Section headers
+- Secondary buttons
+- Code structure elements
+
+**Tertiary Elements** (use muted colors):
+- Additional information
+- Timestamps
+- Metadata
+- Helper text
+
+---
+
+## No Imagery Policy
+
+This is a technical analysis tool. All visuals are:
+- SVG-based icons (Lucide React)
+- Code syntax highlighting
+- Text-based diagrams (ASCII)
+- Data visualizations (charts)
+- No photographic imagery or emojis
